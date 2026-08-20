@@ -1,8 +1,9 @@
-import React, { useState, useRef } from 'react';
-import { X, Play, Loader2, Upload, RefreshCw, AlertCircle } from 'lucide-react';
+import React, { useState, useRef, type DragEvent } from 'react';
+import { X, Play, Loader2, Upload, AlertCircle, FileCheck } from 'lucide-react';
 import { WHITEFIELD_DATASET } from '../api/client';
 import { performImageChangeDetection } from '../utils/imageProcessing';
 import { decodeUploadedFile } from '../utils/fileDecoder';
+import { saveAnalysisToSupabase } from '../utils/supabaseClient';
 import type { PresetDataset } from '../types';
 
 interface AnalysisModalProps {
@@ -18,37 +19,41 @@ export const AnalysisModal: React.FC<AnalysisModalProps> = ({
   onSelectDataset,
   onLog
 }) => {
-  // Simple region name input
-  const [regionName, setRegionName] = useState<string>('Whitefield, Bengaluru');
+  // Region / Location name input
+  const [regionName, setRegionName] = useState<string>('');
 
-  // File upload state (Before & After)
+  // Before & After file states (Start empty so user can drop/upload their own photos)
   const [beforeFileState, setBeforeFileState] = useState<{
     file: File | null;
-    dataUrl: string;
+    dataUrl: string | null;
     name: string;
     size: string;
     format: string;
   }>({
     file: null,
-    dataUrl: WHITEFIELD_DATASET.beforeImage,
-    name: WHITEFIELD_DATASET.beforeTifName,
-    size: '1.42 MB',
-    format: 'TIFF / PNG'
+    dataUrl: null,
+    name: '',
+    size: '',
+    format: ''
   });
 
   const [afterFileState, setAfterFileState] = useState<{
     file: File | null;
-    dataUrl: string;
+    dataUrl: string | null;
     name: string;
     size: string;
     format: string;
   }>({
     file: null,
-    dataUrl: WHITEFIELD_DATASET.afterImage,
-    name: WHITEFIELD_DATASET.afterTifName,
-    size: '1.48 MB',
-    format: 'TIFF / PNG'
+    dataUrl: null,
+    name: '',
+    size: '',
+    format: ''
   });
+
+  // Drag over states for visual feedback
+  const [isDraggingBefore, setIsDraggingBefore] = useState<boolean>(false);
+  const [isDraggingAfter, setIsDraggingAfter] = useState<boolean>(false);
 
   // Processing state
   const [isProcessing, setIsProcessing] = useState<boolean>(false);
@@ -71,10 +76,10 @@ export const AnalysisModal: React.FC<AnalysisModalProps> = ({
         size: decoded.size,
         format: decoded.format
       });
-      onLog(`Loaded Before Observation: ${decoded.name} (${decoded.format}, ${decoded.size})`, 'info');
+      onLog(`Uploaded Before Image: ${decoded.name} (${decoded.format}, ${decoded.size})`, 'info');
     } catch (err) {
       console.error(err);
-      setErrorMessage('Failed to decode Before image/file. Supported: Photo, PNG, JPG, JPEG, TIFF, TIF, ZIP, WEBP.');
+      setErrorMessage('Failed to decode Before image. Supported: Photo, PNG, JPG, JPEG, TIFF, TIF, ZIP, WEBP.');
     }
   };
 
@@ -89,85 +94,125 @@ export const AnalysisModal: React.FC<AnalysisModalProps> = ({
         size: decoded.size,
         format: decoded.format
       });
-      onLog(`Loaded After Observation: ${decoded.name} (${decoded.format}, ${decoded.size})`, 'info');
+      onLog(`Uploaded After Image: ${decoded.name} (${decoded.format}, ${decoded.size})`, 'info');
     } catch (err) {
       console.error(err);
-      setErrorMessage('Failed to decode After image/file. Supported: Photo, PNG, JPG, JPEG, TIFF, TIF, ZIP, WEBP.');
+      setErrorMessage('Failed to decode After image. Supported: Photo, PNG, JPG, JPEG, TIFF, TIF, ZIP, WEBP.');
     }
   };
 
-  const handleResetToWhitefield = () => {
+  // Drag & drop handlers for Before image
+  const onBeforeDragOver = (e: DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    setIsDraggingBefore(true);
+  };
+  const onBeforeDragLeave = () => setIsDraggingBefore(false);
+  const onBeforeDrop = (e: DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    setIsDraggingBefore(false);
+    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+      handleBeforeFileUpload(e.dataTransfer.files[0]);
+    }
+  };
+
+  // Drag & drop handlers for After image
+  const onAfterDragOver = (e: DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    setIsDraggingAfter(true);
+  };
+  const onAfterDragLeave = () => setIsDraggingAfter(false);
+  const onAfterDrop = (e: DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    setIsDraggingAfter(false);
+    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+      handleAfterFileUpload(e.dataTransfer.files[0]);
+    }
+  };
+
+  const handleLoadSampleImages = () => {
     setBeforeFileState({
       file: null,
       dataUrl: WHITEFIELD_DATASET.beforeImage,
       name: WHITEFIELD_DATASET.beforeTifName,
       size: '1.42 MB',
-      format: 'TIFF / PNG'
+      format: 'GeoTIFF / PNG'
     });
     setAfterFileState({
       file: null,
       dataUrl: WHITEFIELD_DATASET.afterImage,
       name: WHITEFIELD_DATASET.afterTifName,
       size: '1.48 MB',
-      format: 'TIFF / PNG'
+      format: 'GeoTIFF / PNG'
     });
     setRegionName('Whitefield, Bengaluru');
-    onLog('Restored Whitefield sample observation files', 'info');
+    onLog('Loaded sample Whitefield satellite image pair', 'info');
   };
 
   const workflowSteps = [
-    { title: 'IMAGE INGESTION', subtitle: `${beforeFileState.name} & ${afterFileState.name} LOADED` },
-    { title: 'IMAGE VALIDATION', subtitle: 'DIMENSIONS & CHANNELS VERIFIED' },
-    { title: 'IMAGE PREPROCESSING', subtitle: 'ALIGNING OBSERVATIONS & NORMALIZING HISTOGRAMS' },
+    { title: 'IMAGE INGESTION', subtitle: `${beforeFileState.name || 'Image A'} & ${afterFileState.name || 'Image B'} INGESTED` },
+    { title: 'IMAGE VALIDATION', subtitle: 'DIMENSIONS & COLOR CHANNELS VERIFIED' },
+    { title: 'IMAGE PREPROCESSING', subtitle: 'HISTOGRAM MATCHING & ALIGNMENT' },
     { title: 'CHANGE DETECTION', subtitle: 'COMPARING PIXELS / CALCULATING SPECTRAL DELTA' },
-    { title: 'CHANGE MAPPING', subtitle: 'IDENTIFYING SIGNIFICANT CLUSTERS & EDGES' },
-    { title: 'RESULT GENERATION', subtitle: 'GENERATING DIFFERENTIAL CHANGE MAP' },
-    { title: 'ANALYSIS COMPLETE', subtitle: 'DERIVED ACTUAL AREA & CHANGE METRICS' }
+    { title: 'CHANGE MAPPING', subtitle: 'ISOLATING SIGNIFICANT CLUSTERS & GEOMETRIES' },
+    { title: 'AI INFERENCE (GROQ LLAMA 3.3)', subtitle: 'GENERATING SATELLITE INTELLIGENCE SUMMARY' },
+    { title: 'ANALYSIS COMPLETE', subtitle: 'DERIVED AREA & POLARIZATION METRICS' }
   ];
 
   const handleStartAnalysis = async () => {
     if (!beforeFileState.dataUrl || !afterFileState.dataUrl) {
-      setErrorMessage('Please provide both Before and After satellite files/photos.');
+      setErrorMessage('Please drop or upload both Before and After satellite photos/images.');
       return;
     }
 
+    const finalRegionName = regionName.trim() || 'Target Observation Region';
     setIsProcessing(true);
-    onLog(`Analyzing uploaded images for ${regionName}: ${beforeFileState.name} vs ${afterFileState.name}`, 'info');
+    onLog(`Initiating pixel change analysis for: ${finalRegionName}`, 'info');
 
     for (let i = 0; i < workflowSteps.length; i++) {
       setCurrentStepIndex(i);
-      if (i === 3) {
-        // Execute real image differencing & area calculation
-        try {
-          const res = await performImageChangeDetection(beforeFileState.dataUrl, afterFileState.dataUrl, 38);
-          onLog(`Calculated ${res.totalChangeRegions} change regions (${res.changedAreaPercentage}% area, ~${res.totalChangedSqMeters.toLocaleString()} m²)`, 'info');
-        } catch (e) {
-          console.error(e);
-        }
-      }
-      await new Promise(r => setTimeout(r, 400));
+      await new Promise(r => setTimeout(r, 450));
     }
 
-    const analysisResult = await performImageChangeDetection(beforeFileState.dataUrl, afterFileState.dataUrl, 38);
+    // Perform actual image differencing and Groq AI summary
+    const analysisResult = await performImageChangeDetection(
+      beforeFileState.dataUrl,
+      afterFileState.dataUrl,
+      38,
+      finalRegionName
+    );
 
     const updatedDataset: PresetDataset = {
       id: `custom-dataset-${Date.now()}`,
-      name: regionName || 'Surveyed Observation Area',
-      region: regionName || 'India',
+      name: finalRegionName,
+      region: finalRegionName,
       regionType: 'Geospatial Change Detection',
-      dataSource: 'Uploaded Satellite Imagery (TIFF/PNG/ZIP)',
+      dataSource: 'Uploaded Satellite Imagery (Photo/TIFF/ZIP)',
       coordinates: [12.9698, 77.7499],
       beforeYear: 'Before',
       afterYear: 'After',
       beforeImage: beforeFileState.dataUrl,
       afterImage: afterFileState.dataUrl,
-      beforeTifName: beforeFileState.name,
-      afterTifName: afterFileState.name,
+      beforeTifName: beforeFileState.name || 'before_observation.png',
+      afterTifName: afterFileState.name || 'after_observation.png',
       analysisResult
     };
 
+    // Save job to Supabase cloud
+    saveAnalysisToSupabase({
+      jobCode: `GW-${Date.now().toString().slice(-6)}`,
+      locationName: finalRegionName,
+      beforeYear: 'Before',
+      afterYear: 'After',
+      changePercentage: analysisResult.changedAreaPercentage,
+      totalAreaSqm: analysisResult.totalChangedSqMeters,
+      structuresCount: analysisResult.structuralCount,
+      vegetationCount: analysisResult.vegetationCount,
+      explanation: analysisResult.aiSummary,
+      regions: analysisResult.regions
+    });
+
     onSelectDataset(updatedDataset);
-    onLog(`Analysis complete. Displaying real change detection overlay for ${regionName}.`, 'success');
+    onLog(`Analysis completed: ${analysisResult.totalChangeRegions} change regions detected (~${analysisResult.totalChangedSqMeters.toLocaleString()} m²).`, 'success');
 
     setTimeout(() => {
       setIsProcessing(false);
@@ -183,8 +228,8 @@ export const AnalysisModal: React.FC<AnalysisModalProps> = ({
       left: 0,
       right: 0,
       bottom: 0,
-      background: 'rgba(0, 0, 0, 0.85)',
-      backdropFilter: 'blur(6px)',
+      background: 'rgba(0, 0, 0, 0.88)',
+      backdropFilter: 'blur(8px)',
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
@@ -192,11 +237,11 @@ export const AnalysisModal: React.FC<AnalysisModalProps> = ({
       padding: '20px'
     }}>
       <div className="hud-panel" style={{
-        width: '640px',
+        width: '680px',
         maxWidth: '100%',
         background: 'var(--bg-panel)',
         border: '1px solid var(--accent-amber)',
-        boxShadow: '0 0 35px rgba(255, 153, 0, 0.25)',
+        boxShadow: '0 0 40px rgba(255, 153, 0, 0.25)',
         display: 'flex',
         flexDirection: 'column'
       }}>
@@ -221,73 +266,88 @@ export const AnalysisModal: React.FC<AnalysisModalProps> = ({
           
           {!isProcessing ? (
             <>
-              {/* Top Bar with quick sample button */}
+              {/* Instruction banner */}
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ fontSize: '0.72rem', fontFamily: 'var(--font-mono)', color: 'var(--accent-amber)', letterSpacing: '0.05em' }}>
-                  SELECT SATELLITE OBSERVATION IMAGES (PHOTO / TIF / TIFF / ZIP / PNG / JPG)
+                <span style={{ fontSize: '0.72rem', fontFamily: 'var(--font-mono)', color: 'var(--text-dim)', letterSpacing: '0.04em' }}>
+                  DROP OR UPLOAD YOUR SATELLITE PHOTOS / FILES (TIFF, TIF, PNG, JPG, ZIP)
                 </span>
                 <button
-                  onClick={handleResetToWhitefield}
+                  onClick={handleLoadSampleImages}
                   className="hud-btn"
-                  style={{ fontSize: '0.62rem', padding: '2px 8px', display: 'flex', alignItems: 'center', gap: '4px' }}
+                  style={{ fontSize: '0.62rem', padding: '3px 8px', display: 'flex', alignItems: 'center', gap: '4px' }}
                 >
-                  <RefreshCw size={11} />
-                  LOAD SAMPLE WHITEFIELD
+                  ⚡ LOAD SAMPLE PAIR
                 </button>
               </div>
 
-              {/* 2 Big Upload Cards: Before Satellite Image & After Satellite Image */}
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px' }}>
+              {/* 2 Big Upload Dropzones */}
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
                 
-                {/* BEFORE SATELLITE IMAGE */}
+                {/* BEFORE SATELLITE IMAGE DROPZONE */}
                 <div
+                  onDragOver={onBeforeDragOver}
+                  onDragLeave={onBeforeDragLeave}
+                  onDrop={onBeforeDrop}
                   onClick={() => beforeInputRef.current?.click()}
                   style={{
-                    border: '1px dashed var(--accent-amber)',
-                    background: 'rgba(10, 14, 20, 0.85)',
-                    padding: '14px',
+                    border: isDraggingBefore
+                      ? '2px dashed #60a5fa'
+                      : beforeFileState.dataUrl
+                        ? '1px solid #60a5fa'
+                        : '1px dashed rgba(96, 165, 250, 0.4)',
+                    background: isDraggingBefore
+                      ? 'rgba(96, 165, 250, 0.12)'
+                      : 'rgba(8, 12, 18, 0.9)',
+                    padding: '16px',
                     cursor: 'pointer',
                     display: 'flex',
                     flexDirection: 'column',
-                    gap: '10px',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    minHeight: '160px',
                     borderRadius: '2px',
-                    transition: 'all 0.15s ease'
+                    transition: 'all 0.15s ease',
+                    textAlign: 'center'
                   }}
                 >
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <span style={{ fontSize: '0.7rem', fontFamily: 'var(--font-mono)', color: '#60a5fa', fontWeight: 'bold' }}>
-                      BEFORE SATELLITE IMAGE
-                    </span>
-                    <span style={{ fontSize: '0.62rem', color: '#10b981', fontFamily: 'var(--font-mono)' }}>
-                      ● READY
-                    </span>
-                  </div>
-
-                  <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
-                    {beforeFileState.dataUrl ? (
+                  {beforeFileState.dataUrl ? (
+                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '10px', width: '100%' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%', alignItems: 'center' }}>
+                        <span style={{ fontSize: '0.7rem', color: '#60a5fa', fontFamily: 'var(--font-mono)', fontWeight: 'bold' }}>
+                          BEFORE SATELLITE IMAGE
+                        </span>
+                        <span style={{ fontSize: '0.6rem', color: '#10b981', fontFamily: 'var(--font-mono)', display: 'flex', alignItems: 'center', gap: '3px' }}>
+                          <FileCheck size={11} /> READY
+                        </span>
+                      </div>
                       <img
                         src={beforeFileState.dataUrl}
                         alt="Before Satellite Observation"
-                        style={{ width: '64px', height: '64px', objectFit: 'cover', border: '1px solid var(--border-dim)' }}
+                        style={{ width: '80px', height: '80px', objectFit: 'cover', border: '1px solid #60a5fa' }}
                       />
-                    ) : (
-                      <div style={{ width: '64px', height: '64px', background: '#07090e', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid var(--border-dim)' }}>
-                        <Upload size={20} color="var(--accent-amber)" />
-                      </div>
-                    )}
-
-                    <div style={{ flex: 1, overflow: 'hidden', fontFamily: 'var(--font-mono)', fontSize: '0.7rem' }}>
-                      <div style={{ color: '#ffffff', fontWeight: 'bold', whiteSpace: 'nowrap', textOverflow: 'ellipsis', overflow: 'hidden' }}>
+                      <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.68rem', color: '#fff', maxWidth: '100%', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                         {beforeFileState.name}
                       </div>
-                      <div style={{ color: 'var(--text-dim)', fontSize: '0.62rem', marginTop: '3px' }}>
-                        {beforeFileState.format} • {beforeFileState.size}
-                      </div>
-                      <div style={{ color: 'var(--accent-amber)', fontSize: '0.62rem', marginTop: '6px' }}>
-                        [ Click to upload photo / file ]
+                      <div style={{ fontSize: '0.6rem', color: '#60a5fa', fontFamily: 'var(--font-mono)' }}>
+                        [ Click or drop to change photo ]
                       </div>
                     </div>
-                  </div>
+                  ) : (
+                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
+                      <div style={{ width: '44px', height: '44px', borderRadius: '50%', background: 'rgba(96, 165, 250, 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid rgba(96, 165, 250, 0.3)' }}>
+                        <Upload size={20} color="#60a5fa" />
+                      </div>
+                      <div style={{ fontSize: '0.75rem', fontFamily: 'var(--font-mono)', color: '#60a5fa', fontWeight: 'bold', letterSpacing: '0.04em' }}>
+                        DROP BEFORE SATELLITE IMAGE
+                      </div>
+                      <div style={{ fontSize: '0.62rem', color: 'var(--text-dim)', fontFamily: 'var(--font-mono)' }}>
+                        Drag & Drop or Click to Browse
+                      </div>
+                      <div style={{ fontSize: '0.58rem', color: 'rgba(255, 255, 255, 0.35)', fontFamily: 'var(--font-mono)' }}>
+                        Supports: Photos, PNG, JPG, TIFF, ZIP
+                      </div>
+                    </div>
+                  )}
 
                   <input
                     ref={beforeInputRef}
@@ -298,55 +358,71 @@ export const AnalysisModal: React.FC<AnalysisModalProps> = ({
                   />
                 </div>
 
-                {/* AFTER SATELLITE IMAGE */}
+                {/* AFTER SATELLITE IMAGE DROPZONE */}
                 <div
+                  onDragOver={onAfterDragOver}
+                  onDragLeave={onAfterDragLeave}
+                  onDrop={onAfterDrop}
                   onClick={() => afterInputRef.current?.click()}
                   style={{
-                    border: '1px dashed var(--accent-amber)',
-                    background: 'rgba(10, 14, 20, 0.85)',
-                    padding: '14px',
+                    border: isDraggingAfter
+                      ? '2px dashed var(--accent-amber)'
+                      : afterFileState.dataUrl
+                        ? '1px solid var(--accent-amber)'
+                        : '1px dashed rgba(255, 153, 0, 0.4)',
+                    background: isDraggingAfter
+                      ? 'rgba(255, 153, 0, 0.12)'
+                      : 'rgba(8, 12, 18, 0.9)',
+                    padding: '16px',
                     cursor: 'pointer',
                     display: 'flex',
                     flexDirection: 'column',
-                    gap: '10px',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    minHeight: '160px',
                     borderRadius: '2px',
-                    transition: 'all 0.15s ease'
+                    transition: 'all 0.15s ease',
+                    textAlign: 'center'
                   }}
                 >
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <span style={{ fontSize: '0.7rem', fontFamily: 'var(--font-mono)', color: 'var(--accent-amber)', fontWeight: 'bold' }}>
-                      AFTER SATELLITE IMAGE
-                    </span>
-                    <span style={{ fontSize: '0.62rem', color: '#10b981', fontFamily: 'var(--font-mono)' }}>
-                      ● READY
-                    </span>
-                  </div>
-
-                  <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
-                    {afterFileState.dataUrl ? (
+                  {afterFileState.dataUrl ? (
+                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '10px', width: '100%' }}>
+                      <div style={{ width: '100%', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <span style={{ fontSize: '0.7rem', color: 'var(--accent-amber)', fontFamily: 'var(--font-mono)', fontWeight: 'bold' }}>
+                          AFTER SATELLITE IMAGE
+                        </span>
+                        <span style={{ fontSize: '0.6rem', color: '#10b981', fontFamily: 'var(--font-mono)', display: 'flex', alignItems: 'center', gap: '3px' }}>
+                          <FileCheck size={11} /> READY
+                        </span>
+                      </div>
                       <img
                         src={afterFileState.dataUrl}
                         alt="After Satellite Observation"
-                        style={{ width: '64px', height: '64px', objectFit: 'cover', border: '1px solid var(--border-dim)' }}
+                        style={{ width: '80px', height: '80px', objectFit: 'cover', border: '1px solid var(--accent-amber)' }}
                       />
-                    ) : (
-                      <div style={{ width: '64px', height: '64px', background: '#07090e', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid var(--border-dim)' }}>
-                        <Upload size={20} color="var(--accent-amber)" />
-                      </div>
-                    )}
-
-                    <div style={{ flex: 1, overflow: 'hidden', fontFamily: 'var(--font-mono)', fontSize: '0.7rem' }}>
-                      <div style={{ color: '#ffffff', fontWeight: 'bold', whiteSpace: 'nowrap', textOverflow: 'ellipsis', overflow: 'hidden' }}>
+                      <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.68rem', color: '#fff', maxWidth: '100%', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                         {afterFileState.name}
                       </div>
-                      <div style={{ color: 'var(--text-dim)', fontSize: '0.62rem', marginTop: '3px' }}>
-                        {afterFileState.format} • {afterFileState.size}
-                      </div>
-                      <div style={{ color: 'var(--accent-amber)', fontSize: '0.62rem', marginTop: '6px' }}>
-                        [ Click to upload photo / file ]
+                      <div style={{ fontSize: '0.6rem', color: 'var(--accent-amber)', fontFamily: 'var(--font-mono)' }}>
+                        [ Click or drop to change photo ]
                       </div>
                     </div>
-                  </div>
+                  ) : (
+                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
+                      <div style={{ width: '44px', height: '44px', borderRadius: '50%', background: 'rgba(255, 153, 0, 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid rgba(255, 153, 0, 0.3)' }}>
+                        <Upload size={20} color="var(--accent-amber)" />
+                      </div>
+                      <div style={{ fontSize: '0.75rem', fontFamily: 'var(--font-mono)', color: 'var(--accent-amber)', fontWeight: 'bold', letterSpacing: '0.04em' }}>
+                        DROP AFTER SATELLITE IMAGE
+                      </div>
+                      <div style={{ fontSize: '0.62rem', color: 'var(--text-dim)', fontFamily: 'var(--font-mono)' }}>
+                        Drag & Drop or Click to Browse
+                      </div>
+                      <div style={{ fontSize: '0.58rem', color: 'rgba(255, 255, 255, 0.35)', fontFamily: 'var(--font-mono)' }}>
+                        Supports: Photos, PNG, JPG, TIFF, ZIP
+                      </div>
+                    </div>
+                  )}
 
                   <input
                     ref={afterInputRef}
@@ -359,9 +435,9 @@ export const AnalysisModal: React.FC<AnalysisModalProps> = ({
 
               </div>
 
-              {/* Simple Single Region Name Input */}
+              {/* Region / Location Name Input */}
               <div style={{
-                background: 'rgba(10, 14, 20, 0.8)',
+                background: 'rgba(10, 14, 20, 0.85)',
                 border: '1px solid var(--border-dim)',
                 padding: '10px 14px',
                 display: 'flex',
@@ -375,7 +451,7 @@ export const AnalysisModal: React.FC<AnalysisModalProps> = ({
                   type="text"
                   value={regionName}
                   onChange={(e) => setRegionName(e.target.value)}
-                  placeholder="e.g. Whitefield, Bengaluru"
+                  placeholder="e.g. Whitefield, Bengaluru or Enter Location Name"
                   style={{
                     flex: 1,
                     padding: '6px 10px',
@@ -410,8 +486,14 @@ export const AnalysisModal: React.FC<AnalysisModalProps> = ({
                 </button>
                 <button
                   onClick={handleStartAnalysis}
+                  disabled={!beforeFileState.dataUrl || !afterFileState.dataUrl}
                   className="hud-btn-primary"
-                  style={{ padding: '6px 18px', fontSize: '0.75rem' }}
+                  style={{
+                    padding: '6px 18px',
+                    fontSize: '0.75rem',
+                    opacity: (!beforeFileState.dataUrl || !afterFileState.dataUrl) ? 0.45 : 1,
+                    cursor: (!beforeFileState.dataUrl || !afterFileState.dataUrl) ? 'not-allowed' : 'pointer'
+                  }}
                 >
                   <Play size={13} fill="currentColor" />
                   INITIATE ANALYSIS
@@ -431,7 +513,7 @@ export const AnalysisModal: React.FC<AnalysisModalProps> = ({
                 gap: '8px'
               }}>
                 <span className="led-amber" />
-                <span>PROCESSING UPLOADED SATELLITE IMAGES // {regionName.toUpperCase()}</span>
+                <span>PROCESSING UPLOADED SATELLITE OBSERVATIONS // {(regionName || 'ANALYSIS').toUpperCase()}</span>
               </div>
 
               <div style={{
