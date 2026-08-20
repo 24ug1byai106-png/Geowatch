@@ -1,4 +1,5 @@
 import UTIF from 'utif';
+import JSZip from 'jszip';
 
 export interface DecodedFileResult {
   dataUrl: string;
@@ -8,13 +9,32 @@ export interface DecodedFileResult {
 }
 
 /**
- * Decodes any user-provided file (TIFF, TIF, PNG, JPG, JPEG, WEBP, PDF preview, etc.)
+ * Decodes any user-provided file (TIFF, TIF, ZIP, PNG, JPG, JPEG, WEBP, PDF preview, etc.)
  * into a browser-renderable image Data URL for canvas analysis.
  */
 export async function decodeUploadedFile(file: File): Promise<DecodedFileResult> {
   const fileName = file.name;
   const extension = fileName.split('.').pop()?.toLowerCase() || '';
   const sizeFormatted = (file.size / (1024 * 1024)).toFixed(2) + ' MB';
+
+  // Handle ZIP archives
+  if (extension === 'zip') {
+    const zip = new JSZip();
+    const contents = await zip.loadAsync(file);
+    const imageFiles = Object.keys(contents.files).filter(name => {
+      const ext = name.split('.').pop()?.toLowerCase();
+      return ['png', 'jpg', 'jpeg', 'tif', 'tiff', 'webp'].includes(ext || '');
+    });
+
+    if (imageFiles.length === 0) {
+      throw new Error('No supported image found in ZIP archive.');
+    }
+
+    const firstImageName = imageFiles[0];
+    const imageBlob = await contents.files[firstImageName].async('blob');
+    const subFile = new File([imageBlob], firstImageName);
+    return decodeUploadedFile(subFile);
+  }
 
   // Handle TIFF / TIF files
   if (extension === 'tif' || extension === 'tiff') {
@@ -50,7 +70,7 @@ export async function decodeUploadedFile(file: File): Promise<DecodedFileResult>
             dataUrl,
             name: fileName,
             size: sizeFormatted,
-            format: 'GeoTIFF / TIFF (Converted)'
+            format: 'GeoTIFF / TIFF'
           });
         } catch (err) {
           console.error('TIFF decode error, fallback to URL', err);

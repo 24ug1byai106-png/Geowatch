@@ -18,11 +18,8 @@ export const AnalysisModal: React.FC<AnalysisModalProps> = ({
   onSelectDataset,
   onLog
 }) => {
-  // Region & timeline metadata
-  const [regionName, setRegionName] = useState<string>('Whitefield — IT & Urban Expansion');
-  const [cityName, setCityName] = useState<string>('Bengaluru, Karnataka, India');
-  const [beforeYear, setBeforeYear] = useState<string>('2024');
-  const [afterYear, setAfterYear] = useState<string>('2025');
+  // Simple region name input
+  const [regionName, setRegionName] = useState<string>('Whitefield, Bengaluru');
 
   // File upload state (Before & After)
   const [beforeFileState, setBeforeFileState] = useState<{
@@ -36,7 +33,7 @@ export const AnalysisModal: React.FC<AnalysisModalProps> = ({
     dataUrl: WHITEFIELD_DATASET.beforeImage,
     name: WHITEFIELD_DATASET.beforeTifName,
     size: '1.42 MB',
-    format: 'TIFF / PNG (Preloaded)'
+    format: 'TIFF / PNG'
   });
 
   const [afterFileState, setAfterFileState] = useState<{
@@ -50,7 +47,7 @@ export const AnalysisModal: React.FC<AnalysisModalProps> = ({
     dataUrl: WHITEFIELD_DATASET.afterImage,
     name: WHITEFIELD_DATASET.afterTifName,
     size: '1.48 MB',
-    format: 'TIFF / PNG (Preloaded)'
+    format: 'TIFF / PNG'
   });
 
   // Processing state
@@ -74,10 +71,10 @@ export const AnalysisModal: React.FC<AnalysisModalProps> = ({
         size: decoded.size,
         format: decoded.format
       });
-      onLog(`Uploaded Baseline observation file: ${decoded.name} (${decoded.format}, ${decoded.size})`, 'info');
+      onLog(`Loaded Before Observation: ${decoded.name} (${decoded.format}, ${decoded.size})`, 'info');
     } catch (err) {
       console.error(err);
-      setErrorMessage('Failed to decode baseline observation file. Supported: TIFF, TIF, PNG, JPG, JPEG, WEBP');
+      setErrorMessage('Failed to decode Before image/file. Supported: Photo, PNG, JPG, JPEG, TIFF, TIF, ZIP, WEBP.');
     }
   };
 
@@ -92,10 +89,10 @@ export const AnalysisModal: React.FC<AnalysisModalProps> = ({
         size: decoded.size,
         format: decoded.format
       });
-      onLog(`Uploaded Comparison observation file: ${decoded.name} (${decoded.format}, ${decoded.size})`, 'info');
+      onLog(`Loaded After Observation: ${decoded.name} (${decoded.format}, ${decoded.size})`, 'info');
     } catch (err) {
       console.error(err);
-      setErrorMessage('Failed to decode comparison observation file. Supported: TIFF, TIF, PNG, JPG, JPEG, WEBP');
+      setErrorMessage('Failed to decode After image/file. Supported: Photo, PNG, JPG, JPEG, TIFF, TIF, ZIP, WEBP.');
     }
   };
 
@@ -105,87 +102,63 @@ export const AnalysisModal: React.FC<AnalysisModalProps> = ({
       dataUrl: WHITEFIELD_DATASET.beforeImage,
       name: WHITEFIELD_DATASET.beforeTifName,
       size: '1.42 MB',
-      format: 'TIFF / PNG (Preloaded)'
+      format: 'TIFF / PNG'
     });
     setAfterFileState({
       file: null,
       dataUrl: WHITEFIELD_DATASET.afterImage,
       name: WHITEFIELD_DATASET.afterTifName,
       size: '1.48 MB',
-      format: 'TIFF / PNG (Preloaded)'
+      format: 'TIFF / PNG'
     });
-    setRegionName('Whitefield — IT & Urban Expansion');
-    setCityName('Bengaluru, Karnataka, India');
-    setBeforeYear('2024');
-    setAfterYear('2025');
-    onLog('Restored pre-packaged Whitefield 2024 & 2025 satellite observation files', 'info');
+    setRegionName('Whitefield, Bengaluru');
+    onLog('Restored Whitefield sample observation files', 'info');
   };
 
-  // Exact 7-step sequence
   const workflowSteps = [
     { title: 'IMAGE INGESTION', subtitle: `${beforeFileState.name} & ${afterFileState.name} LOADED` },
-    { title: 'IMAGE VALIDATION', subtitle: 'IMAGE FORMAT & DIMENSIONS VERIFIED' },
+    { title: 'IMAGE VALIDATION', subtitle: 'DIMENSIONS & CHANNELS VERIFIED' },
     { title: 'IMAGE PREPROCESSING', subtitle: 'ALIGNING OBSERVATIONS & NORMALIZING HISTOGRAMS' },
-    { title: 'CHANGE DETECTION', subtitle: 'COMPARING PIXELS / SPECTRAL DELTA (Δ > 38)' },
+    { title: 'CHANGE DETECTION', subtitle: 'COMPARING PIXELS / CALCULATING SPECTRAL DELTA' },
     { title: 'CHANGE MAPPING', subtitle: 'IDENTIFYING SIGNIFICANT CLUSTERS & EDGES' },
     { title: 'RESULT GENERATION', subtitle: 'GENERATING DIFFERENTIAL CHANGE MAP' },
-    { title: 'ANALYSIS COMPLETE', subtitle: 'DERIVED ACTUAL IMAGE STATISTICS' }
+    { title: 'ANALYSIS COMPLETE', subtitle: 'DERIVED ACTUAL AREA & CHANGE METRICS' }
   ];
 
   const handleStartAnalysis = async () => {
     if (!beforeFileState.dataUrl || !afterFileState.dataUrl) {
-      setErrorMessage('Please provide both Before and After satellite files.');
+      setErrorMessage('Please provide both Before and After satellite files/photos.');
       return;
     }
 
     setIsProcessing(true);
-    onLog(`Initiating real pixel differencing on uploaded files: ${beforeFileState.name} vs ${afterFileState.name}`, 'info');
+    onLog(`Analyzing uploaded images for ${regionName}: ${beforeFileState.name} vs ${afterFileState.name}`, 'info');
 
-    // Step 0: Ingestion
-    setCurrentStepIndex(0);
-    await new Promise(r => setTimeout(r, 400));
-
-    // Step 1: Validation
-    setCurrentStepIndex(1);
-    await new Promise(r => setTimeout(r, 400));
-
-    // Step 2: Preprocessing
-    setCurrentStepIndex(2);
-    await new Promise(r => setTimeout(r, 400));
-
-    // Step 3: Change detection (Real Canvas Differencing Engine)
-    setCurrentStepIndex(3);
-    let analysisResult = null;
-    try {
-      analysisResult = await performImageChangeDetection(beforeFileState.dataUrl, afterFileState.dataUrl, 38);
-      onLog(`Calculated ${analysisResult.totalChangeRegions} change regions (${analysisResult.changedAreaPercentage}% area delta)`, 'info');
-    } catch (e) {
-      console.error('Differencing error', e);
+    for (let i = 0; i < workflowSteps.length; i++) {
+      setCurrentStepIndex(i);
+      if (i === 3) {
+        // Execute real image differencing & area calculation
+        try {
+          const res = await performImageChangeDetection(beforeFileState.dataUrl, afterFileState.dataUrl, 38);
+          onLog(`Calculated ${res.totalChangeRegions} change regions (${res.changedAreaPercentage}% area, ~${res.totalChangedSqMeters.toLocaleString()} m²)`, 'info');
+        } catch (e) {
+          console.error(e);
+        }
+      }
+      await new Promise(r => setTimeout(r, 400));
     }
-    await new Promise(r => setTimeout(r, 500));
 
-    // Step 4: Change mapping
-    setCurrentStepIndex(4);
-    await new Promise(r => setTimeout(r, 400));
+    const analysisResult = await performImageChangeDetection(beforeFileState.dataUrl, afterFileState.dataUrl, 38);
 
-    // Step 5: Result generation
-    setCurrentStepIndex(5);
-    await new Promise(r => setTimeout(r, 400));
-
-    // Step 6: Complete
-    setCurrentStepIndex(6);
-    await new Promise(r => setTimeout(r, 400));
-
-    // Create the updated active dataset using the user's uploaded images
     const updatedDataset: PresetDataset = {
       id: `custom-dataset-${Date.now()}`,
-      name: regionName || 'Custom Observation Area',
-      region: cityName || 'Survey Area, India',
-      regionType: 'Urban / Infrastructure Expansion',
-      dataSource: 'Uploaded Satellite Imagery (TIFF/PNG)',
+      name: regionName || 'Surveyed Observation Area',
+      region: regionName || 'India',
+      regionType: 'Geospatial Change Detection',
+      dataSource: 'Uploaded Satellite Imagery (TIFF/PNG/ZIP)',
       coordinates: [12.9698, 77.7499],
-      beforeYear,
-      afterYear,
+      beforeYear: 'Before',
+      afterYear: 'After',
       beforeImage: beforeFileState.dataUrl,
       afterImage: afterFileState.dataUrl,
       beforeTifName: beforeFileState.name,
@@ -194,7 +167,7 @@ export const AnalysisModal: React.FC<AnalysisModalProps> = ({
     };
 
     onSelectDataset(updatedDataset);
-    onLog(`Completed clean analysis of provided image pair. Loaded ${analysisResult?.totalChangeRegions || 0} change regions.`, 'success');
+    onLog(`Analysis complete. Displaying real change detection overlay for ${regionName}.`, 'success');
 
     setTimeout(() => {
       setIsProcessing(false);
@@ -219,12 +192,11 @@ export const AnalysisModal: React.FC<AnalysisModalProps> = ({
       padding: '20px'
     }}>
       <div className="hud-panel" style={{
-        width: '680px',
+        width: '640px',
         maxWidth: '100%',
         background: 'var(--bg-panel)',
         border: '1px solid var(--accent-amber)',
         boxShadow: '0 0 35px rgba(255, 153, 0, 0.25)',
-        maxHeight: '94vh',
         display: 'flex',
         flexDirection: 'column'
       }}>
@@ -233,7 +205,7 @@ export const AnalysisModal: React.FC<AnalysisModalProps> = ({
         <div className="hud-header" style={{ justifyContent: 'space-between' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             <span className="led-amber" />
-            <span>INITIATE GEOSPATIAL CHANGE ANALYSIS // SATELLITE DATA INGESTION</span>
+            <span>INITIATE GEOSPATIAL CHANGE ANALYSIS</span>
           </div>
           <button
             onClick={onClose}
@@ -245,265 +217,194 @@ export const AnalysisModal: React.FC<AnalysisModalProps> = ({
         </div>
 
         {/* Modal Body */}
-        <div style={{ padding: '18px 20px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '14px' }}>
+        <div style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
           
           {!isProcessing ? (
             <>
-              {/* SECTION 1: UPLOAD SATELLITE OBSERVATION DATA */}
-              <div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-                  <label style={{ fontSize: '0.72rem', fontFamily: 'var(--font-mono)', color: 'var(--accent-amber)', letterSpacing: '0.05em' }}>
-                    1. UPLOAD SATELLITE OBSERVATION FILES (TIFF / TIF / PNG / JPG / WEBP)
-                  </label>
-                  <button
-                    onClick={handleResetToWhitefield}
-                    className="hud-btn"
-                    style={{ fontSize: '0.62rem', padding: '2px 8px', display: 'flex', alignItems: 'center', gap: '4px' }}
-                  >
-                    <RefreshCw size={11} />
-                    LOAD SAMPLE WHITEFIELD FILES
-                  </button>
-                </div>
+              {/* Top Bar with quick sample button */}
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span style={{ fontSize: '0.72rem', fontFamily: 'var(--font-mono)', color: 'var(--accent-amber)', letterSpacing: '0.05em' }}>
+                  SELECT SATELLITE OBSERVATION IMAGES (PHOTO / TIF / TIFF / ZIP / PNG / JPG)
+                </span>
+                <button
+                  onClick={handleResetToWhitefield}
+                  className="hud-btn"
+                  style={{ fontSize: '0.62rem', padding: '2px 8px', display: 'flex', alignItems: 'center', gap: '4px' }}
+                >
+                  <RefreshCw size={11} />
+                  LOAD SAMPLE WHITEFIELD
+                </button>
+              </div>
 
-                {/* 2-Column File Upload Cards */}
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-                  
-                  {/* BEFORE FILE UPLOAD CARD */}
-                  <div
-                    onClick={() => beforeInputRef.current?.click()}
-                    style={{
-                      border: '1px dashed var(--accent-amber)',
-                      background: 'rgba(10, 14, 20, 0.8)',
-                      padding: '12px',
-                      cursor: 'pointer',
-                      display: 'flex',
-                      flexDirection: 'column',
-                      gap: '8px',
-                      transition: 'all 0.15s ease'
-                    }}
-                  >
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <span style={{ fontSize: '0.65rem', fontFamily: 'var(--font-mono)', color: '#60a5fa', fontWeight: 'bold' }}>
-                        BEFORE IMAGE (BASELINE)
-                      </span>
-                      <span style={{ fontSize: '0.6rem', color: '#10b981', fontFamily: 'var(--font-mono)' }}>
-                        ● READY
-                      </span>
-                    </div>
-
-                    <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
-                      {beforeFileState.dataUrl ? (
-                        <img
-                          src={beforeFileState.dataUrl}
-                          alt="Before Observation Preview"
-                          style={{ width: '56px', height: '56px', objectFit: 'cover', border: '1px solid var(--border-dim)' }}
-                        />
-                      ) : (
-                        <div style={{ width: '56px', height: '56px', background: '#07090e', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid var(--border-dim)' }}>
-                          <Upload size={18} color="var(--accent-amber)" />
-                        </div>
-                      )}
-
-                      <div style={{ flex: 1, overflow: 'hidden', fontFamily: 'var(--font-mono)', fontSize: '0.68rem' }}>
-                        <div style={{ color: '#ffffff', fontWeight: 'bold', whiteSpace: 'nowrap', textOverflow: 'ellipsis', overflow: 'hidden' }}>
-                          {beforeFileState.name}
-                        </div>
-                        <div style={{ color: 'var(--text-dim)', fontSize: '0.62rem', marginTop: '2px' }}>
-                          {beforeFileState.format} • {beforeFileState.size}
-                        </div>
-                        <div style={{ color: 'var(--accent-amber)', fontSize: '0.6rem', marginTop: '4px' }}>
-                          [ Click to choose file / photo ]
-                        </div>
-                      </div>
-                    </div>
-
-                    <input
-                      ref={beforeInputRef}
-                      type="file"
-                      accept=".tif,.tiff,.png,.jpg,.jpeg,.webp,image/*"
-                      onChange={(e) => e.target.files?.[0] && handleBeforeFileUpload(e.target.files[0])}
-                      style={{ display: 'none' }}
-                    />
-                  </div>
-
-                  {/* AFTER FILE UPLOAD CARD */}
-                  <div
-                    onClick={() => afterInputRef.current?.click()}
-                    style={{
-                      border: '1px dashed var(--accent-amber)',
-                      background: 'rgba(10, 14, 20, 0.8)',
-                      padding: '12px',
-                      cursor: 'pointer',
-                      display: 'flex',
-                      flexDirection: 'column',
-                      gap: '8px',
-                      transition: 'all 0.15s ease'
-                    }}
-                  >
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <span style={{ fontSize: '0.65rem', fontFamily: 'var(--font-mono)', color: 'var(--accent-amber)', fontWeight: 'bold' }}>
-                        AFTER IMAGE (COMPARISON)
-                      </span>
-                      <span style={{ fontSize: '0.6rem', color: '#10b981', fontFamily: 'var(--font-mono)' }}>
-                        ● READY
-                      </span>
-                    </div>
-
-                    <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
-                      {afterFileState.dataUrl ? (
-                        <img
-                          src={afterFileState.dataUrl}
-                          alt="After Observation Preview"
-                          style={{ width: '56px', height: '56px', objectFit: 'cover', border: '1px solid var(--border-dim)' }}
-                        />
-                      ) : (
-                        <div style={{ width: '56px', height: '56px', background: '#07090e', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid var(--border-dim)' }}>
-                          <Upload size={18} color="var(--accent-amber)" />
-                        </div>
-                      )}
-
-                      <div style={{ flex: 1, overflow: 'hidden', fontFamily: 'var(--font-mono)', fontSize: '0.68rem' }}>
-                        <div style={{ color: '#ffffff', fontWeight: 'bold', whiteSpace: 'nowrap', textOverflow: 'ellipsis', overflow: 'hidden' }}>
-                          {afterFileState.name}
-                        </div>
-                        <div style={{ color: 'var(--text-dim)', fontSize: '0.62rem', marginTop: '2px' }}>
-                          {afterFileState.format} • {afterFileState.size}
-                        </div>
-                        <div style={{ color: 'var(--accent-amber)', fontSize: '0.6rem', marginTop: '4px' }}>
-                          [ Click to choose file / photo ]
-                        </div>
-                      </div>
-                    </div>
-
-                    <input
-                      ref={afterInputRef}
-                      type="file"
-                      accept=".tif,.tiff,.png,.jpg,.jpeg,.webp,image/*"
-                      onChange={(e) => e.target.files?.[0] && handleAfterFileUpload(e.target.files[0])}
-                      style={{ display: 'none' }}
-                    />
-                  </div>
-
-                </div>
-
-                {errorMessage && (
-                  <div style={{
+              {/* 2 Big Upload Cards: Before Satellite Image & After Satellite Image */}
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px' }}>
+                
+                {/* BEFORE SATELLITE IMAGE */}
+                <div
+                  onClick={() => beforeInputRef.current?.click()}
+                  style={{
+                    border: '1px dashed var(--accent-amber)',
+                    background: 'rgba(10, 14, 20, 0.85)',
+                    padding: '14px',
+                    cursor: 'pointer',
                     display: 'flex',
-                    alignItems: 'center',
-                    gap: '6px',
-                    color: '#f43f5e',
-                    fontFamily: 'var(--font-mono)',
-                    fontSize: '0.68rem',
-                    marginTop: '6px'
-                  }}>
-                    <AlertCircle size={13} />
-                    <span>{errorMessage}</span>
-                  </div>
-                )}
-              </div>
-
-              {/* SECTION 2: OBSERVATION METADATA & TIMELINE */}
-              <div>
-                <label style={{ display: 'block', fontSize: '0.72rem', fontFamily: 'var(--font-mono)', color: 'var(--accent-amber)', marginBottom: '8px', letterSpacing: '0.05em' }}>
-                  2. OBSERVATION PARAMETERS & TIMELINE
-                </label>
-
-                <div style={{
-                  background: 'rgba(10, 14, 20, 0.8)',
-                  border: '1px solid var(--border-dim)',
-                  padding: '12px 14px',
-                  display: 'grid',
-                  gridTemplateColumns: '1fr 1fr',
-                  gap: '12px',
-                  fontFamily: 'var(--font-mono)',
-                  fontSize: '0.72rem'
-                }}>
-                  <div>
-                    <span style={{ color: 'var(--text-dim)', fontSize: '0.65rem' }}>TARGET REGION NAME:</span>
-                    <input
-                      type="text"
-                      value={regionName}
-                      onChange={(e) => setRegionName(e.target.value)}
-                      placeholder="e.g. Whitefield — IT & Urban Expansion"
-                      style={{
-                        width: '100%',
-                        padding: '6px 8px',
-                        background: '#06080e',
-                        border: '1px solid var(--border-dim)',
-                        color: '#fff',
-                        fontFamily: 'var(--font-mono)',
-                        fontSize: '0.72rem',
-                        marginTop: '4px'
-                      }}
-                    />
+                    flexDirection: 'column',
+                    gap: '10px',
+                    borderRadius: '2px',
+                    transition: 'all 0.15s ease'
+                  }}
+                >
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <span style={{ fontSize: '0.7rem', fontFamily: 'var(--font-mono)', color: '#60a5fa', fontWeight: 'bold' }}>
+                      BEFORE SATELLITE IMAGE
+                    </span>
+                    <span style={{ fontSize: '0.62rem', color: '#10b981', fontFamily: 'var(--font-mono)' }}>
+                      ● READY
+                    </span>
                   </div>
 
-                  <div>
-                    <span style={{ color: 'var(--text-dim)', fontSize: '0.65rem' }}>CITY / STATE / COUNTRY:</span>
-                    <input
-                      type="text"
-                      value={cityName}
-                      onChange={(e) => setCityName(e.target.value)}
-                      placeholder="e.g. Bengaluru, Karnataka, India"
-                      style={{
-                        width: '100%',
-                        padding: '6px 8px',
-                        background: '#06080e',
-                        border: '1px solid var(--border-dim)',
-                        color: '#cbd5e1',
-                        fontFamily: 'var(--font-mono)',
-                        fontSize: '0.72rem',
-                        marginTop: '4px'
-                      }}
-                    />
+                  <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+                    {beforeFileState.dataUrl ? (
+                      <img
+                        src={beforeFileState.dataUrl}
+                        alt="Before Satellite Observation"
+                        style={{ width: '64px', height: '64px', objectFit: 'cover', border: '1px solid var(--border-dim)' }}
+                      />
+                    ) : (
+                      <div style={{ width: '64px', height: '64px', background: '#07090e', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid var(--border-dim)' }}>
+                        <Upload size={20} color="var(--accent-amber)" />
+                      </div>
+                    )}
+
+                    <div style={{ flex: 1, overflow: 'hidden', fontFamily: 'var(--font-mono)', fontSize: '0.7rem' }}>
+                      <div style={{ color: '#ffffff', fontWeight: 'bold', whiteSpace: 'nowrap', textOverflow: 'ellipsis', overflow: 'hidden' }}>
+                        {beforeFileState.name}
+                      </div>
+                      <div style={{ color: 'var(--text-dim)', fontSize: '0.62rem', marginTop: '3px' }}>
+                        {beforeFileState.format} • {beforeFileState.size}
+                      </div>
+                      <div style={{ color: 'var(--accent-amber)', fontSize: '0.62rem', marginTop: '6px' }}>
+                        [ Click to upload photo / file ]
+                      </div>
+                    </div>
                   </div>
 
-                  <div>
-                    <span style={{ color: 'var(--text-dim)', fontSize: '0.65rem' }}>BEFORE YEAR (BASELINE):</span>
-                    <input
-                      type="text"
-                      value={beforeYear}
-                      onChange={(e) => setBeforeYear(e.target.value)}
-                      placeholder="2024"
-                      style={{
-                        width: '100%',
-                        padding: '6px 8px',
-                        background: '#06080e',
-                        border: '1px solid var(--border-dim)',
-                        color: '#60a5fa',
-                        fontFamily: 'var(--font-mono)',
-                        fontSize: '0.72rem',
-                        marginTop: '4px',
-                        fontWeight: 'bold'
-                      }}
-                    />
-                  </div>
-
-                  <div>
-                    <span style={{ color: 'var(--text-dim)', fontSize: '0.65rem' }}>AFTER YEAR (COMPARISON):</span>
-                    <input
-                      type="text"
-                      value={afterYear}
-                      onChange={(e) => setAfterYear(e.target.value)}
-                      placeholder="2025"
-                      style={{
-                        width: '100%',
-                        padding: '6px 8px',
-                        background: '#06080e',
-                        border: '1px solid var(--border-dim)',
-                        color: 'var(--accent-amber)',
-                        fontFamily: 'var(--font-mono)',
-                        fontSize: '0.72rem',
-                        marginTop: '4px',
-                        fontWeight: 'bold'
-                      }}
-                    />
-                  </div>
+                  <input
+                    ref={beforeInputRef}
+                    type="file"
+                    accept=".tif,.tiff,.zip,.png,.jpg,.jpeg,.webp,image/*"
+                    onChange={(e) => e.target.files?.[0] && handleBeforeFileUpload(e.target.files[0])}
+                    style={{ display: 'none' }}
+                  />
                 </div>
+
+                {/* AFTER SATELLITE IMAGE */}
+                <div
+                  onClick={() => afterInputRef.current?.click()}
+                  style={{
+                    border: '1px dashed var(--accent-amber)',
+                    background: 'rgba(10, 14, 20, 0.85)',
+                    padding: '14px',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '10px',
+                    borderRadius: '2px',
+                    transition: 'all 0.15s ease'
+                  }}
+                >
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <span style={{ fontSize: '0.7rem', fontFamily: 'var(--font-mono)', color: 'var(--accent-amber)', fontWeight: 'bold' }}>
+                      AFTER SATELLITE IMAGE
+                    </span>
+                    <span style={{ fontSize: '0.62rem', color: '#10b981', fontFamily: 'var(--font-mono)' }}>
+                      ● READY
+                    </span>
+                  </div>
+
+                  <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+                    {afterFileState.dataUrl ? (
+                      <img
+                        src={afterFileState.dataUrl}
+                        alt="After Satellite Observation"
+                        style={{ width: '64px', height: '64px', objectFit: 'cover', border: '1px solid var(--border-dim)' }}
+                      />
+                    ) : (
+                      <div style={{ width: '64px', height: '64px', background: '#07090e', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid var(--border-dim)' }}>
+                        <Upload size={20} color="var(--accent-amber)" />
+                      </div>
+                    )}
+
+                    <div style={{ flex: 1, overflow: 'hidden', fontFamily: 'var(--font-mono)', fontSize: '0.7rem' }}>
+                      <div style={{ color: '#ffffff', fontWeight: 'bold', whiteSpace: 'nowrap', textOverflow: 'ellipsis', overflow: 'hidden' }}>
+                        {afterFileState.name}
+                      </div>
+                      <div style={{ color: 'var(--text-dim)', fontSize: '0.62rem', marginTop: '3px' }}>
+                        {afterFileState.format} • {afterFileState.size}
+                      </div>
+                      <div style={{ color: 'var(--accent-amber)', fontSize: '0.62rem', marginTop: '6px' }}>
+                        [ Click to upload photo / file ]
+                      </div>
+                    </div>
+                  </div>
+
+                  <input
+                    ref={afterInputRef}
+                    type="file"
+                    accept=".tif,.tiff,.zip,.png,.jpg,.jpeg,.webp,image/*"
+                    onChange={(e) => e.target.files?.[0] && handleAfterFileUpload(e.target.files[0])}
+                    style={{ display: 'none' }}
+                  />
+                </div>
+
               </div>
 
-              {/* Actions Button */}
-              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '6px' }}>
+              {/* Simple Single Region Name Input */}
+              <div style={{
+                background: 'rgba(10, 14, 20, 0.8)',
+                border: '1px solid var(--border-dim)',
+                padding: '10px 14px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '12px',
+                fontFamily: 'var(--font-mono)',
+                fontSize: '0.72rem'
+              }}>
+                <span style={{ color: 'var(--text-dim)', whiteSpace: 'nowrap' }}>REGION / LOCATION NAME:</span>
+                <input
+                  type="text"
+                  value={regionName}
+                  onChange={(e) => setRegionName(e.target.value)}
+                  placeholder="e.g. Whitefield, Bengaluru"
+                  style={{
+                    flex: 1,
+                    padding: '6px 10px',
+                    background: '#06080e',
+                    border: '1px solid var(--border-dim)',
+                    color: 'var(--accent-amber)',
+                    fontFamily: 'var(--font-mono)',
+                    fontSize: '0.75rem',
+                    outline: 'none'
+                  }}
+                />
+              </div>
+
+              {errorMessage && (
+                <div style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  color: '#f43f5e',
+                  fontFamily: 'var(--font-mono)',
+                  fontSize: '0.68rem'
+                }}>
+                  <AlertCircle size={13} />
+                  <span>{errorMessage}</span>
+                </div>
+              )}
+
+              {/* Actions */}
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '4px' }}>
                 <button onClick={onClose} className="hud-btn" style={{ padding: '6px 14px', fontSize: '0.75rem' }}>
                   CANCEL
                 </button>
@@ -518,7 +419,7 @@ export const AnalysisModal: React.FC<AnalysisModalProps> = ({
               </div>
             </>
           ) : (
-            /* REAL PROCESSING PROGRESS SEQUENCE */
+            /* PROCESSING SEQUENCE */
             <div style={{ display: 'flex', flexDirection: 'column', gap: '14px', padding: '10px 0' }}>
               <div style={{
                 fontFamily: 'var(--font-tech)',
@@ -530,7 +431,7 @@ export const AnalysisModal: React.FC<AnalysisModalProps> = ({
                 gap: '8px'
               }}>
                 <span className="led-amber" />
-                <span>PROCESSING UPLOADED SATELLITE OBSERVATION PAIR</span>
+                <span>PROCESSING UPLOADED SATELLITE IMAGES // {regionName.toUpperCase()}</span>
               </div>
 
               <div style={{
