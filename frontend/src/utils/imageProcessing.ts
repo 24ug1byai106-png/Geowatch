@@ -1,3 +1,5 @@
+import { generateGroqAiSummary } from './groqClient';
+
 export interface CalculatedChangeRegion {
   id: string;
   name: string;
@@ -31,12 +33,13 @@ export interface ImageAnalysisResult {
 
 /**
  * Performs actual pixel-by-pixel image subtraction, thresholding,
- * connected region detection, and metric calculation.
+ * connected region detection, metric calculation, and Groq AI summary generation.
  */
 export async function performImageChangeDetection(
   img2024Src: string,
   img2025Src: string,
-  threshold: number = 38
+  threshold: number = 38,
+  locationName: string = 'Whitefield, Bengaluru'
 ): Promise<ImageAnalysisResult> {
   return new Promise((resolve, reject) => {
     const img1 = new Image();
@@ -45,11 +48,11 @@ export async function performImageChangeDetection(
     img2.crossOrigin = 'anonymous';
 
     let loadedCount = 0;
-    const onLoaded = () => {
+    const onLoaded = async () => {
       loadedCount++;
       if (loadedCount === 2) {
         try {
-          const result = processImages(img1, img2, threshold);
+          const result = await processImages(img1, img2, threshold, locationName);
           resolve(result);
         } catch (err) {
           reject(err);
@@ -59,19 +62,24 @@ export async function performImageChangeDetection(
 
     img1.onload = onLoaded;
     img2.onload = onLoaded;
-    img1.onerror = () => reject(new Error('Failed to load 2024 satellite observation image'));
-    img2.onerror = () => reject(new Error('Failed to load 2025 satellite observation image'));
+    img1.onerror = () => reject(new Error('Failed to load baseline satellite observation image'));
+    img2.onerror = () => reject(new Error('Failed to load comparison satellite observation image'));
 
     img1.src = img2024Src;
     img2.src = img2025Src;
   });
 }
 
-function processImages(img1: HTMLImageElement, img2: HTMLImageElement, threshold: number): ImageAnalysisResult {
+async function processImages(
+  img1: HTMLImageElement,
+  img2: HTMLImageElement,
+  threshold: number,
+  locationName: string
+): Promise<ImageAnalysisResult> {
   const width = 512;
   const height = 512;
 
-  // Offscreen canvas for 2024
+  // Offscreen canvas for baseline
   const canvas1 = document.createElement('canvas');
   canvas1.width = width;
   canvas1.height = height;
@@ -79,7 +87,7 @@ function processImages(img1: HTMLImageElement, img2: HTMLImageElement, threshold
   ctx1.drawImage(img1, 0, 0, width, height);
   const data1 = ctx1.getImageData(0, 0, width, height).data;
 
-  // Offscreen canvas for 2025
+  // Offscreen canvas for comparison
   const canvas2 = document.createElement('canvas');
   canvas2.width = width;
   canvas2.height = height;
@@ -95,7 +103,7 @@ function processImages(img1: HTMLImageElement, img2: HTMLImageElement, threshold
   const diffImgData = diffCtx.createImageData(width, height);
   const diffData = diffImgData.data;
 
-  // Grid accumulator for connected components / cluster extraction (32x32 blocks)
+  // Grid accumulator for connected components / cluster extraction (16x16 blocks)
   const gridSize = 16;
   const gridW = Math.floor(width / gridSize);
   const gridH = Math.floor(height / gridSize);
@@ -144,7 +152,7 @@ function processImages(img1: HTMLImageElement, img2: HTMLImageElement, threshold
           diffData[idx + 3] = 210;
           gridCategory[gIdx] = 3;
         } else if (g1 > r1 && g1 > b1 && brightness2 > brightness1) {
-          // Greenery removed / replaced with built surface (Green to Urban transition)
+          // Greenery removed / replaced with built surface (Green)
           diffData[idx] = 16;
           diffData[idx + 1] = 185;
           diffData[idx + 2] = 129;
@@ -180,7 +188,6 @@ function processImages(img1: HTMLImageElement, img2: HTMLImageElement, threshold
       const gIdx = gy * gridW + gx;
       const density = gridIntensity[gIdx] / (gridSize * gridSize);
 
-      // Only clusters with significant change density
       if (density > 28) {
         const cat = gridCategory[gIdx];
         let categoryName: 'structure' | 'vegetation' | 'high_intensity' = 'structure';
@@ -201,7 +208,7 @@ function processImages(img1: HTMLImageElement, img2: HTMLImageElement, threshold
         const confidence = Math.min(99.4, Math.max(85.0, Number((88 + (density / 4)).toFixed(1))));
 
         regions.push({
-          id: `cr-wf-${regionCounter}`,
+          id: `cr-reg-${regionCounter}`,
           name: `CHANGE REGION #0${regionCounter}`,
           category: categoryName,
           color,
@@ -213,7 +220,7 @@ function processImages(img1: HTMLImageElement, img2: HTMLImageElement, threshold
           areaSqMeters,
           intensity: Number(density.toFixed(1)),
           confidence,
-          explanation: `Visual differencing identified a ${typeLabel.toLowerCase()} with average pixel delta of ${density.toFixed(1)}.`
+          explanation: `Visual differencing identified a ${typeLabel.toLowerCase()} with pixel delta intensity of ${density.toFixed(1)}.`
         });
 
         regionCounter++;
@@ -244,7 +251,19 @@ function processImages(img1: HTMLImageElement, img2: HTMLImageElement, threshold
   const vegetationCount = regions.filter(r => r.category === 'vegetation').length;
   const highIntensityCount = regions.filter(r => r.category === 'high_intensity').length;
 
-  const aiSummary = `Analysis of the Whitefield observation pair identified ${regions.length} distinct change regions across ${changedAreaPercentage}% of the surveyed footprint. The detected shifts include ${structuralCount} potential structural variations and ${vegetationCount} vegetation alterations, indicating active peri-urban development.`;
+  // Generate real AI summary using Groq LLM (Llama 3.3 70B)
+  const aiSummary = await generateGroqAiSummary({
+    locationName,
+    totalChangeRegions: regions.length,
+    changedAreaPercentage,
+    totalChangedSqMeters,
+    structuralCount,
+    vegetationCount,
+    highIntensityCount,
+    changeIntensityLabel,
+    largestRegionName,
+    largestRegionArea
+  });
 
   return {
     totalChangeRegions: regions.length,
