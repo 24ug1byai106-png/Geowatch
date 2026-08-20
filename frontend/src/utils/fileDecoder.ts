@@ -1,3 +1,4 @@
+import * as GeoTIFF from 'geotiff';
 import UTIF from 'utif';
 import JSZip from 'jszip';
 
@@ -9,16 +10,15 @@ export interface DecodedFileResult {
 }
 
 /**
- * Decodes any user-provided file (GeoTIFF, TIFF, TIF, ZIP, PNG, JPG, JPEG, WEBP, etc.)
- * into a high-visibility, browser-renderable image Data URL with automatic contrast stretching
- * for satellite bands.
+ * Robust satellite imagery and GeoTIFF decoder using GeoTIFF.js + UTIF + Canvas.
+ * Handles Sentinel-2, Landsat, 16-bit multi-band GeoTIFFs, JPEG/PNG/WEBP photos, and ZIP archives.
  */
 export async function decodeUploadedFile(file: File): Promise<DecodedFileResult> {
   const fileName = file.name;
   const extension = fileName.split('.').pop()?.toLowerCase() || '';
   const sizeFormatted = (file.size / (1024 * 1024)).toFixed(2) + ' MB';
 
-  // Handle ZIP archives
+  // 1. Handle ZIP archives
   if (extension === 'zip') {
     const zip = new JSZip();
     const contents = await zip.loadAsync(file);
@@ -28,7 +28,7 @@ export async function decodeUploadedFile(file: File): Promise<DecodedFileResult>
     });
 
     if (imageFiles.length === 0) {
-      throw new Error('No supported image found in ZIP archive.');
+      throw new Error('No supported satellite image found in ZIP archive.');
     }
 
     const firstImageName = imageFiles[0];
@@ -37,91 +37,140 @@ export async function decodeUploadedFile(file: File): Promise<DecodedFileResult>
     return decodeUploadedFile(subFile);
   }
 
-  // Handle TIFF / GeoTIFF / TIF files
+  // 2. Handle TIFF / GeoTIFF / TIF files with GeoTIFF.js
   if (extension === 'tif' || extension === 'tiff') {
-    return new Promise((resolve) => {
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        try {
-          const buffer = e.target?.result as ArrayBuffer;
-          const ifds = UTIF.decode(buffer);
-          if (!ifds || ifds.length === 0) {
-            throw new Error('Invalid TIFF structure');
-          }
+    const arrayBuffer = await file.arrayBuffer();
 
-          UTIF.decodeImage(buffer, ifds[0]);
-          const rgba = UTIF.toRGBA8(ifds[0]);
-          const width = ifds[0].width;
-          const height = ifds[0].height;
+    // Primary: Decode using GeoTIFF.js (supports 16-bit, float, Sentinel-2, multi-band)
+    try {
+      const tiff = await GeoTIFF.fromArrayBuffer(arrayBuffer);
+      const image = await tiff.getImage();
+      const width = image.getWidth();
+      const height = image.getHeight();
+      const rasters = await image.readRasters();
 
-          // Find min & max across RGB for satellite auto-contrast stretching
-          let minVal = 255;
-          let maxVal = 0;
-          for (let i = 0; i < rgba.length; i += 4) {
-            const r = rgba[i];
-            const g = rgba[i + 1];
-            const b = rgba[i + 2];
-            const maxRGB = Math.max(r, g, b);
-            const minRGB = Math.min(r, g, b);
-            if (maxRGB > maxVal) maxVal = maxRGB;
-            if (minRGB < minVal) minVal = minRGB;
-          }
+      // Create thumbnail canvas
+      const canvas = document.createElement('canvas');
+      canvas.width = width;
+      canvas.height = height;
+      const ctx = canvas.getContext('2d')!;
+      const imgData = ctx.createImageData(width, height);
+      const data = imgData.data;
 
-          // If raw values are dark (common in Sentinel-2 / 16-bit GeoTIFFs), stretch range
-          const needsStretch = maxVal < 100 && maxVal > minVal;
-          const range = maxVal - minVal || 1;
+      // Determine number of bands
+      const numBands = Array.isArray(rasters) ? rasters.length : 1;
+      const bandR = Array.isArray(rasters) && numBands >= 1 ? rasters[0] : (rasters as any);
+      const bandG = Array.isArray(rasters) && numBands >= 2 ? rasters[1] : bandR;
+      const bandB = Array.isArray(rasters) && numBands >= 3 ? rasters[2] : bandR;
 
-          const canvas = document.createElement('canvas');
-          canvas.width = width;
-          canvas.height = height;
-          const ctx = canvas.getContext('2d')!;
-          const imgData = ctx.createImageData(width, height);
+      // Calculate min/max percentile for contrast stretching
+      let minR = Infinity, maxR = -Infinity;
+      let minG = Infinity, maxG = -Infinity;
+      let minB = Infinity, maxB = -Infinity;
 
-          for (let i = 0; i < rgba.length; i += 4) {
-            if (needsStretch) {
-              imgData.data[i] = Math.min(255, Math.max(0, Math.round(((rgba[i] - minVal) / range) * 255)));
-              imgData.data[i + 1] = Math.min(255, Math.max(0, Math.round(((rgba[i + 1] - minVal) / range) * 255)));
-              imgData.data[i + 2] = Math.min(255, Math.max(0, Math.round(((rgba[i + 2] - minVal) / range) * 255)));
-            } else {
-              imgData.data[i] = rgba[i];
-              imgData.data[i + 1] = rgba[i + 1];
-              imgData.data[i + 2] = rgba[i + 2];
-            }
-            imgData.data[i + 3] = 255; // Ensure opaque
-          }
+      const totalPixels = width * height;
+      const sampleStep = Math.max(1, Math.floor(totalPixels / 5000)); // Sample 5k pixels for fast stats
 
-          ctx.putImageData(imgData, 0, 0);
-          const dataUrl = canvas.toDataURL('image/png');
+      for (let i = 0; i < totalPixels; i += sampleStep) {
+        const vr = Number(bandR[i]) || 0;
+        const vg = Number(bandG[i]) || 0;
+        const vb = Number(bandB[i]) || 0;
+        if (vr < minR) minR = vr;
+        if (vr > maxR) maxR = vr;
+        if (vg < minG) minG = vg;
+        if (vg > maxG) maxG = vg;
+        if (vb < minB) minB = vb;
+        if (vb > maxB) maxB = vb;
+      }
 
-          resolve({
-            dataUrl,
-            name: fileName,
-            size: sizeFormatted,
-            format: 'Sentinel GeoTIFF'
-          });
-        } catch (err) {
-          console.error('TIFF decode error, fallback to URL', err);
-          resolve({
-            dataUrl: URL.createObjectURL(file),
-            name: fileName,
-            size: sizeFormatted,
-            format: 'TIFF'
-          });
-        }
+      // If max is 0 (all black), fallback bounds
+      if (maxR <= minR) { minR = 0; maxR = 255; }
+      if (maxG <= minG) { minG = 0; maxG = 255; }
+      if (maxB <= minB) { minB = 0; maxB = 255; }
+
+      const rangeR = maxR - minR || 1;
+      const rangeG = maxG - minG || 1;
+      const rangeB = maxB - minB || 1;
+
+      // Populate canvas RGBA buffer with stretched values
+      for (let i = 0; i < totalPixels; i++) {
+        const pxIdx = i * 4;
+        const vr = Number(bandR[i]) || 0;
+        const vg = Number(bandG[i]) || 0;
+        const vb = Number(bandB[i]) || 0;
+
+        // Auto-scale to 0-255
+        data[pxIdx] = Math.min(255, Math.max(0, Math.round(((vr - minR) / rangeR) * 255)));
+        data[pxIdx + 1] = Math.min(255, Math.max(0, Math.round(((vg - minG) / rangeG) * 255)));
+        data[pxIdx + 2] = Math.min(255, Math.max(0, Math.round(((vb - minB) / rangeB) * 255)));
+        data[pxIdx + 3] = 255; // Alpha
+      }
+
+      ctx.putImageData(imgData, 0, 0);
+      const dataUrl = canvas.toDataURL('image/png');
+
+      return {
+        dataUrl,
+        name: fileName,
+        size: sizeFormatted,
+        format: `Sentinel-2 GeoTIFF (${width}x${height})`
       };
-      reader.onerror = () => {
-        resolve({
-          dataUrl: URL.createObjectURL(file),
+    } catch (geotiffErr) {
+      console.warn('GeoTIFF.js decode notice, trying UTIF fallback:', geotiffErr);
+    }
+
+    // Secondary fallback: UTIF
+    try {
+      const ifds = UTIF.decode(arrayBuffer);
+      if (ifds && ifds.length > 0) {
+        UTIF.decodeImage(arrayBuffer, ifds[0]);
+        const rgba = UTIF.toRGBA8(ifds[0]);
+        const width = ifds[0].width;
+        const height = ifds[0].height;
+
+        const canvas = document.createElement('canvas');
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d')!;
+        const imgData = ctx.createImageData(width, height);
+
+        // Find min/max for stretching
+        let minVal = 255, maxVal = 0;
+        for (let i = 0; i < rgba.length; i += 4) {
+          const m = Math.max(rgba[i], rgba[i+1], rgba[i+2]);
+          if (m > maxVal) maxVal = m;
+          if (m < minVal) minVal = m;
+        }
+
+        const range = maxVal - minVal || 1;
+        for (let i = 0; i < rgba.length; i += 4) {
+          imgData.data[i] = Math.round(((rgba[i] - minVal) / range) * 255);
+          imgData.data[i + 1] = Math.round(((rgba[i + 1] - minVal) / range) * 255);
+          imgData.data[i + 2] = Math.round(((rgba[i + 2] - minVal) / range) * 255);
+          imgData.data[i + 3] = 255;
+        }
+
+        ctx.putImageData(imgData, 0, 0);
+        return {
+          dataUrl: canvas.toDataURL('image/png'),
           name: fileName,
           size: sizeFormatted,
-          format: 'TIFF'
-        });
-      };
-      reader.readAsArrayBuffer(file);
-    });
+          format: 'GeoTIFF / TIFF'
+        };
+      }
+    } catch (utifErr) {
+      console.warn('UTIF fallback failed:', utifErr);
+    }
+
+    return {
+      dataUrl: URL.createObjectURL(file),
+      name: fileName,
+      size: sizeFormatted,
+      format: 'TIFF'
+    };
   }
 
-  // Handle standard images (PNG, JPG, JPEG, WEBP, etc.)
+  // 3. Handle standard images (PNG, JPG, JPEG, WEBP)
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.onload = (e) => {
