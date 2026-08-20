@@ -9,8 +9,9 @@ export interface DecodedFileResult {
 }
 
 /**
- * Decodes any user-provided file (TIFF, TIF, ZIP, PNG, JPG, JPEG, WEBP, PDF preview, etc.)
- * into a browser-renderable image Data URL for canvas analysis.
+ * Decodes any user-provided file (GeoTIFF, TIFF, TIF, ZIP, PNG, JPG, JPEG, WEBP, etc.)
+ * into a high-visibility, browser-renderable image Data URL with automatic contrast stretching
+ * for satellite bands.
  */
 export async function decodeUploadedFile(file: File): Promise<DecodedFileResult> {
   const fileName = file.name;
@@ -36,9 +37,9 @@ export async function decodeUploadedFile(file: File): Promise<DecodedFileResult>
     return decodeUploadedFile(subFile);
   }
 
-  // Handle TIFF / TIF files
+  // Handle TIFF / GeoTIFF / TIF files
   if (extension === 'tif' || extension === 'tiff') {
-    return new Promise((resolve, reject) => {
+    return new Promise((resolve) => {
       const reader = new FileReader();
       reader.onload = (e) => {
         try {
@@ -53,16 +54,42 @@ export async function decodeUploadedFile(file: File): Promise<DecodedFileResult>
           const width = ifds[0].width;
           const height = ifds[0].height;
 
+          // Find min & max across RGB for satellite auto-contrast stretching
+          let minVal = 255;
+          let maxVal = 0;
+          for (let i = 0; i < rgba.length; i += 4) {
+            const r = rgba[i];
+            const g = rgba[i + 1];
+            const b = rgba[i + 2];
+            const maxRGB = Math.max(r, g, b);
+            const minRGB = Math.min(r, g, b);
+            if (maxRGB > maxVal) maxVal = maxRGB;
+            if (minRGB < minVal) minVal = minRGB;
+          }
+
+          // If raw values are dark (common in Sentinel-2 / 16-bit GeoTIFFs), stretch range
+          const needsStretch = maxVal < 100 && maxVal > minVal;
+          const range = maxVal - minVal || 1;
+
           const canvas = document.createElement('canvas');
           canvas.width = width;
           canvas.height = height;
           const ctx = canvas.getContext('2d')!;
           const imgData = ctx.createImageData(width, height);
-          
-          for (let i = 0; i < rgba.length; i++) {
-            imgData.data[i] = rgba[i];
+
+          for (let i = 0; i < rgba.length; i += 4) {
+            if (needsStretch) {
+              imgData.data[i] = Math.min(255, Math.max(0, Math.round(((rgba[i] - minVal) / range) * 255)));
+              imgData.data[i + 1] = Math.min(255, Math.max(0, Math.round(((rgba[i + 1] - minVal) / range) * 255)));
+              imgData.data[i + 2] = Math.min(255, Math.max(0, Math.round(((rgba[i + 2] - minVal) / range) * 255)));
+            } else {
+              imgData.data[i] = rgba[i];
+              imgData.data[i + 1] = rgba[i + 1];
+              imgData.data[i + 2] = rgba[i + 2];
+            }
+            imgData.data[i + 3] = 255; // Ensure opaque
           }
-          
+
           ctx.putImageData(imgData, 0, 0);
           const dataUrl = canvas.toDataURL('image/png');
 
@@ -70,7 +97,7 @@ export async function decodeUploadedFile(file: File): Promise<DecodedFileResult>
             dataUrl,
             name: fileName,
             size: sizeFormatted,
-            format: 'GeoTIFF / TIFF'
+            format: 'Sentinel GeoTIFF'
           });
         } catch (err) {
           console.error('TIFF decode error, fallback to URL', err);
@@ -82,7 +109,14 @@ export async function decodeUploadedFile(file: File): Promise<DecodedFileResult>
           });
         }
       };
-      reader.onerror = () => reject(new Error('Failed to read file buffer'));
+      reader.onerror = () => {
+        resolve({
+          dataUrl: URL.createObjectURL(file),
+          name: fileName,
+          size: sizeFormatted,
+          format: 'TIFF'
+        });
+      };
       reader.readAsArrayBuffer(file);
     });
   }

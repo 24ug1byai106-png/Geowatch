@@ -22,7 +22,7 @@ export const AnalysisModal: React.FC<AnalysisModalProps> = ({
   // Region / Location name input
   const [regionName, setRegionName] = useState<string>('');
 
-  // Before & After file states (Start empty so user can drop/upload their own photos)
+  // Before & After file states
   const [beforeFileState, setBeforeFileState] = useState<{
     file: File | null;
     dataUrl: string | null;
@@ -51,7 +51,7 @@ export const AnalysisModal: React.FC<AnalysisModalProps> = ({
     format: ''
   });
 
-  // Drag over states for visual feedback
+  // Drag over states
   const [isDraggingBefore, setIsDraggingBefore] = useState<boolean>(false);
   const [isDraggingAfter, setIsDraggingAfter] = useState<boolean>(false);
 
@@ -151,7 +151,7 @@ export const AnalysisModal: React.FC<AnalysisModalProps> = ({
   const workflowSteps = [
     { title: 'IMAGE INGESTION', subtitle: `${beforeFileState.name || 'Image A'} & ${afterFileState.name || 'Image B'} INGESTED` },
     { title: 'IMAGE VALIDATION', subtitle: 'DIMENSIONS & COLOR CHANNELS VERIFIED' },
-    { title: 'IMAGE PREPROCESSING', subtitle: 'HISTOGRAM MATCHING & ALIGNMENT' },
+    { title: 'IMAGE PREPROCESSING', subtitle: 'CONTRAST NORMALIZATION & ALIGNMENT' },
     { title: 'CHANGE DETECTION', subtitle: 'COMPARING PIXELS / CALCULATING SPECTRAL DELTA' },
     { title: 'CHANGE MAPPING', subtitle: 'ISOLATING SIGNIFICANT CLUSTERS & GEOMETRIES' },
     { title: 'AI INFERENCE (GROQ LLAMA 3.3)', subtitle: 'GENERATING SATELLITE INTELLIGENCE SUMMARY' },
@@ -164,7 +164,7 @@ export const AnalysisModal: React.FC<AnalysisModalProps> = ({
       return;
     }
 
-    const finalRegionName = regionName.trim() || 'Target Observation Region';
+    const finalRegionName = regionName.trim() || 'Surveyed Region';
     setIsProcessing(true);
     onLog(`Initiating pixel change analysis for: ${finalRegionName}`, 'info');
 
@@ -173,7 +173,7 @@ export const AnalysisModal: React.FC<AnalysisModalProps> = ({
       await new Promise(r => setTimeout(r, 450));
     }
 
-    // Perform actual image differencing and Groq AI summary
+    // Perform image differencing and Groq AI summary
     const analysisResult = await performImageChangeDetection(
       beforeFileState.dataUrl,
       afterFileState.dataUrl,
@@ -186,7 +186,7 @@ export const AnalysisModal: React.FC<AnalysisModalProps> = ({
       name: finalRegionName,
       region: finalRegionName,
       regionType: 'Geospatial Change Detection',
-      dataSource: 'Uploaded Satellite Imagery (Photo/TIFF/ZIP)',
+      dataSource: 'Uploaded Satellite Imagery (GeoTIFF/Photo)',
       coordinates: [12.9698, 77.7499],
       beforeYear: 'Before',
       afterYear: 'After',
@@ -234,20 +234,22 @@ export const AnalysisModal: React.FC<AnalysisModalProps> = ({
       alignItems: 'center',
       justifyContent: 'center',
       zIndex: 2000,
-      padding: '20px'
+      padding: '16px'
     }}>
       <div className="hud-panel" style={{
-        width: '680px',
-        maxWidth: '100%',
+        width: '740px',
+        maxWidth: '96vw',
+        boxSizing: 'border-box',
         background: 'var(--bg-panel)',
         border: '1px solid var(--accent-amber)',
         boxShadow: '0 0 40px rgba(255, 153, 0, 0.25)',
         display: 'flex',
-        flexDirection: 'column'
+        flexDirection: 'column',
+        overflow: 'hidden'
       }}>
         
         {/* Header */}
-        <div className="hud-header" style={{ justifyContent: 'space-between' }}>
+        <div className="hud-header" style={{ justifyContent: 'space-between', width: '100%', boxSizing: 'border-box' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             <span className="led-amber" />
             <span>INITIATE GEOSPATIAL CHANGE ANALYSIS</span>
@@ -262,14 +264,14 @@ export const AnalysisModal: React.FC<AnalysisModalProps> = ({
         </div>
 
         {/* Modal Body */}
-        <div style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+        <div style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '16px', width: '100%', boxSizing: 'border-box' }}>
           
           {!isProcessing ? (
             <>
               {/* Instruction banner */}
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px' }}>
                 <span style={{ fontSize: '0.72rem', fontFamily: 'var(--font-mono)', color: 'var(--text-dim)', letterSpacing: '0.04em' }}>
-                  DROP OR UPLOAD YOUR SATELLITE PHOTOS / FILES (TIFF, TIF, PNG, JPG, ZIP)
+                  DROP OR UPLOAD SATELLITE OBSERVATIONS (TIFF / TIF / PNG / JPG / ZIP)
                 </span>
                 <button
                   onClick={handleLoadSampleImages}
@@ -280,8 +282,14 @@ export const AnalysisModal: React.FC<AnalysisModalProps> = ({
                 </button>
               </div>
 
-              {/* 2 Big Upload Dropzones */}
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+              {/* 2 Big Upload Dropzones with fixed grid constraints */}
+              <div style={{
+                display: 'grid',
+                gridTemplateColumns: 'minmax(0, 1fr) minmax(0, 1fr)',
+                gap: '16px',
+                width: '100%',
+                boxSizing: 'border-box'
+              }}>
                 
                 {/* BEFORE SATELLITE IMAGE DROPZONE */}
                 <div
@@ -290,6 +298,9 @@ export const AnalysisModal: React.FC<AnalysisModalProps> = ({
                   onDrop={onBeforeDrop}
                   onClick={() => beforeInputRef.current?.click()}
                   style={{
+                    minWidth: 0,
+                    boxSizing: 'border-box',
+                    overflow: 'hidden',
                     border: isDraggingBefore
                       ? '2px dashed #60a5fa'
                       : beforeFileState.dataUrl
@@ -298,20 +309,20 @@ export const AnalysisModal: React.FC<AnalysisModalProps> = ({
                     background: isDraggingBefore
                       ? 'rgba(96, 165, 250, 0.12)'
                       : 'rgba(8, 12, 18, 0.9)',
-                    padding: '16px',
+                    padding: '14px',
                     cursor: 'pointer',
                     display: 'flex',
                     flexDirection: 'column',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    minHeight: '160px',
+                    minHeight: '170px',
                     borderRadius: '2px',
                     transition: 'all 0.15s ease',
                     textAlign: 'center'
                   }}
                 >
                   {beforeFileState.dataUrl ? (
-                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '10px', width: '100%' }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px', width: '100%', minWidth: 0, overflow: 'hidden' }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%', alignItems: 'center' }}>
                         <span style={{ fontSize: '0.7rem', color: '#60a5fa', fontFamily: 'var(--font-mono)', fontWeight: 'bold' }}>
                           BEFORE SATELLITE IMAGE
@@ -320,20 +331,33 @@ export const AnalysisModal: React.FC<AnalysisModalProps> = ({
                           <FileCheck size={11} /> READY
                         </span>
                       </div>
-                      <img
-                        src={beforeFileState.dataUrl}
-                        alt="Before Satellite Observation"
-                        style={{ width: '80px', height: '80px', objectFit: 'cover', border: '1px solid #60a5fa' }}
-                      />
-                      <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.68rem', color: '#fff', maxWidth: '100%', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      
+                      <div style={{ width: '90px', height: '90px', background: '#000', border: '1px solid #60a5fa', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
+                        <img
+                          src={beforeFileState.dataUrl}
+                          alt="Before Satellite Observation"
+                          style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                        />
+                      </div>
+
+                      <div style={{
+                        width: '100%',
+                        fontFamily: 'var(--font-mono)',
+                        fontSize: '0.68rem',
+                        color: '#fff',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        whiteSpace: 'nowrap'
+                      }} title={beforeFileState.name}>
                         {beforeFileState.name}
                       </div>
+
                       <div style={{ fontSize: '0.6rem', color: '#60a5fa', fontFamily: 'var(--font-mono)' }}>
                         [ Click or drop to change photo ]
                       </div>
                     </div>
                   ) : (
-                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px', width: '100%' }}>
                       <div style={{ width: '44px', height: '44px', borderRadius: '50%', background: 'rgba(96, 165, 250, 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid rgba(96, 165, 250, 0.3)' }}>
                         <Upload size={20} color="#60a5fa" />
                       </div>
@@ -344,7 +368,7 @@ export const AnalysisModal: React.FC<AnalysisModalProps> = ({
                         Drag & Drop or Click to Browse
                       </div>
                       <div style={{ fontSize: '0.58rem', color: 'rgba(255, 255, 255, 0.35)', fontFamily: 'var(--font-mono)' }}>
-                        Supports: Photos, PNG, JPG, TIFF, ZIP
+                        Supports: Sentinel GeoTIFF, Photo, PNG, JPG, ZIP
                       </div>
                     </div>
                   )}
@@ -365,6 +389,9 @@ export const AnalysisModal: React.FC<AnalysisModalProps> = ({
                   onDrop={onAfterDrop}
                   onClick={() => afterInputRef.current?.click()}
                   style={{
+                    minWidth: 0,
+                    boxSizing: 'border-box',
+                    overflow: 'hidden',
                     border: isDraggingAfter
                       ? '2px dashed var(--accent-amber)'
                       : afterFileState.dataUrl
@@ -373,20 +400,20 @@ export const AnalysisModal: React.FC<AnalysisModalProps> = ({
                     background: isDraggingAfter
                       ? 'rgba(255, 153, 0, 0.12)'
                       : 'rgba(8, 12, 18, 0.9)',
-                    padding: '16px',
+                    padding: '14px',
                     cursor: 'pointer',
                     display: 'flex',
                     flexDirection: 'column',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    minHeight: '160px',
+                    minHeight: '170px',
                     borderRadius: '2px',
                     transition: 'all 0.15s ease',
                     textAlign: 'center'
                   }}
                 >
                   {afterFileState.dataUrl ? (
-                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '10px', width: '100%' }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px', width: '100%', minWidth: 0, overflow: 'hidden' }}>
                       <div style={{ width: '100%', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                         <span style={{ fontSize: '0.7rem', color: 'var(--accent-amber)', fontFamily: 'var(--font-mono)', fontWeight: 'bold' }}>
                           AFTER SATELLITE IMAGE
@@ -395,20 +422,33 @@ export const AnalysisModal: React.FC<AnalysisModalProps> = ({
                           <FileCheck size={11} /> READY
                         </span>
                       </div>
-                      <img
-                        src={afterFileState.dataUrl}
-                        alt="After Satellite Observation"
-                        style={{ width: '80px', height: '80px', objectFit: 'cover', border: '1px solid var(--accent-amber)' }}
-                      />
-                      <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.68rem', color: '#fff', maxWidth: '100%', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+
+                      <div style={{ width: '90px', height: '90px', background: '#000', border: '1px solid var(--accent-amber)', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
+                        <img
+                          src={afterFileState.dataUrl}
+                          alt="After Satellite Observation"
+                          style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                        />
+                      </div>
+
+                      <div style={{
+                        width: '100%',
+                        fontFamily: 'var(--font-mono)',
+                        fontSize: '0.68rem',
+                        color: '#fff',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        whiteSpace: 'nowrap'
+                      }} title={afterFileState.name}>
                         {afterFileState.name}
                       </div>
+
                       <div style={{ fontSize: '0.6rem', color: 'var(--accent-amber)', fontFamily: 'var(--font-mono)' }}>
                         [ Click or drop to change photo ]
                       </div>
                     </div>
                   ) : (
-                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px', width: '100%' }}>
                       <div style={{ width: '44px', height: '44px', borderRadius: '50%', background: 'rgba(255, 153, 0, 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid rgba(255, 153, 0, 0.3)' }}>
                         <Upload size={20} color="var(--accent-amber)" />
                       </div>
@@ -419,7 +459,7 @@ export const AnalysisModal: React.FC<AnalysisModalProps> = ({
                         Drag & Drop or Click to Browse
                       </div>
                       <div style={{ fontSize: '0.58rem', color: 'rgba(255, 255, 255, 0.35)', fontFamily: 'var(--font-mono)' }}>
-                        Supports: Photos, PNG, JPG, TIFF, ZIP
+                        Supports: Sentinel GeoTIFF, Photo, PNG, JPG, ZIP
                       </div>
                     </div>
                   )}
@@ -437,6 +477,8 @@ export const AnalysisModal: React.FC<AnalysisModalProps> = ({
 
               {/* Region / Location Name Input */}
               <div style={{
+                width: '100%',
+                boxSizing: 'border-box',
                 background: 'rgba(10, 14, 20, 0.85)',
                 border: '1px solid var(--border-dim)',
                 padding: '10px 14px',
@@ -480,7 +522,7 @@ export const AnalysisModal: React.FC<AnalysisModalProps> = ({
               )}
 
               {/* Actions */}
-              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '4px' }}>
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '4px', width: '100%', boxSizing: 'border-box' }}>
                 <button onClick={onClose} className="hud-btn" style={{ padding: '6px 14px', fontSize: '0.75rem' }}>
                   CANCEL
                 </button>
@@ -502,7 +544,7 @@ export const AnalysisModal: React.FC<AnalysisModalProps> = ({
             </>
           ) : (
             /* PROCESSING SEQUENCE */
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '14px', padding: '10px 0' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '14px', padding: '10px 0', width: '100%', boxSizing: 'border-box' }}>
               <div style={{
                 fontFamily: 'var(--font-tech)',
                 fontSize: '0.85rem',
