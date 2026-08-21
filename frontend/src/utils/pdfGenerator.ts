@@ -494,3 +494,135 @@ The physical footprint of the observed change covers approximately ${alert.affec
   const pdfBlob = doc.output('blob');
   return { pdfBlob, filename, documentHash };
 }
+
+/**
+ * Generates a full Mission Change Detection PDF Report for any active dataset
+ */
+export async function generateMissionPdfReport(dataset: import('../types').PresetDataset): Promise<{ pdfBlob: Blob; filename: string }> {
+  const doc = new jsPDF({
+    orientation: 'portrait',
+    unit: 'mm',
+    format: 'a4'
+  });
+
+  const pageWidth = doc.internal.pageSize.getWidth();
+  const pageHeight = doc.internal.pageSize.getHeight();
+  const filename = `Hydra_Mission_Report_${dataset.id}_${Date.now()}.pdf`;
+  const result = dataset.analysisResult;
+  const audit = result?.governmentAudit;
+
+  // Colors
+  const darkNavy = [10, 15, 26] as const;
+  const cyanAccent = [0, 240, 255] as const;
+  const amberAccent = [255, 153, 0] as const;
+  const textWhite = [248, 250, 252] as const;
+  const textMuted = [148, 163, 184] as const;
+
+  // PAGE 1: COVER & MISSION SUMMARY
+  doc.setFillColor(darkNavy[0], darkNavy[1], darkNavy[2]);
+  doc.rect(0, 0, pageWidth, pageHeight, 'F');
+
+  // Emblem Header
+  doc.setDrawColor(cyanAccent[0], cyanAccent[1], cyanAccent[2]);
+  doc.setLineWidth(1.2);
+  doc.rect(14, 14, pageWidth - 28, 44);
+
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(16);
+  doc.setTextColor(cyanAccent[0], cyanAccent[1], cyanAccent[2]);
+  doc.text('HYDRA POSITIONING SYSTEM', 20, 28);
+
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(9);
+  doc.setTextColor(amberAccent[0], amberAccent[1], amberAccent[2]);
+  doc.text('EARTH OBSERVATION & GEOSPATIAL CHANGE DETECTION REPORT', 20, 36);
+
+  doc.setFontSize(8);
+  doc.setTextColor(textMuted[0], textMuted[1], textMuted[2]);
+  doc.text(`AOI: ${dataset.name.toUpperCase()} // ${dataset.beforeYear} VS ${dataset.afterYear}`, 20, 46);
+
+  // Key Metrics Grid
+  let curY = 70;
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(11);
+  doc.setTextColor(textWhite[0], textWhite[1], textWhite[2]);
+  doc.text('1. QUANTITATIVE CHANGE METRICS', 14, curY);
+
+  curY += 8;
+  const metrics = [
+    { label: 'Surface Area Modified', val: `${result?.changedAreaPercentage || 0}%` },
+    { label: 'Total Footprint Modified', val: `~${(result?.totalChangedSqMeters || 0).toLocaleString()} m²` },
+    { label: 'Identified Change Regions', val: `${result?.totalChangeRegions || 0} discrete contours` },
+    { label: 'Structural Variations', val: `${result?.structuralCount || 0} structures` },
+    { label: 'Vegetation Variations', val: `${result?.vegetationCount || 0} canopy shifts` },
+    { label: 'Change Intensity', val: result?.changeIntensityLabel || 'Moderate' },
+    { label: 'Sensor / Source', val: dataset.dataSource },
+    { label: 'Coordinates', val: `${dataset.coordinates[0].toFixed(4)}°N, ${dataset.coordinates[1].toFixed(4)}°E` }
+  ];
+
+  metrics.forEach((m) => {
+    doc.setFillColor(15, 23, 42);
+    doc.rect(14, curY, pageWidth - 28, 9, 'F');
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(8.5);
+    doc.setTextColor(textMuted[0], textMuted[1], textMuted[2]);
+    doc.text(m.label, 18, curY + 6);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(textWhite[0], textWhite[1], textWhite[2]);
+    doc.text(m.val, pageWidth - 20, curY + 6, { align: 'right' });
+    curY += 11;
+  });
+
+  // AI Multimodal Analytical Explanation
+  curY += 6;
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(11);
+  doc.setTextColor(textWhite[0], textWhite[1], textWhite[2]);
+  doc.text('2. AI MULTIMODAL ANALYTICAL DERIVATION', 14, curY);
+
+  curY += 8;
+  doc.setFillColor(15, 23, 42);
+  doc.rect(14, curY, pageWidth - 28, 38, 'F');
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(8.5);
+  doc.setTextColor(textWhite[0], textWhite[1], textWhite[2]);
+  const explanation = result?.aiSummary || 'Satellite change detection analysis successfully computed from multi-temporal optical imagery.';
+  doc.text(explanation, 18, curY + 8, { maxWidth: pageWidth - 36, lineHeightFactor: 1.4 });
+
+  // Physical Asset Breakdown
+  curY += 46;
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(11);
+  doc.setTextColor(textWhite[0], textWhite[1], textWhite[2]);
+  doc.text('3. PHYSICAL LANDSCAPE METRICS', 14, curY);
+
+  curY += 8;
+  const landMetrics = [
+    { label: 'New Buildings Built', val: `+${audit?.newBuildingsConstructed || result?.structuralCount || 0} units (~${(audit?.builtUpAreaSqm || 0).toLocaleString()} m²)` },
+    { label: 'Road Corridor Expansion', val: `+${audit?.roadExpansionKm || 0} km (~${(audit?.roadWidenedAreaSqm || 0).toLocaleString()} m²)` },
+    { label: 'Tree Canopy Loss', val: `~${audit?.treesFelledEstimated || (result?.vegetationCount || 0) * 150} trees (~${(audit?.deforestedCanopySqm || 0).toLocaleString()} m²)` }
+  ];
+
+  landMetrics.forEach((lm) => {
+    doc.setFillColor(15, 23, 42);
+    doc.rect(14, curY, pageWidth - 28, 9, 'F');
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(8.5);
+    doc.setTextColor(textMuted[0], textMuted[1], textMuted[2]);
+    doc.text(lm.label, 18, curY + 6);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(textWhite[0], textWhite[1], textWhite[2]);
+    doc.text(lm.val, pageWidth - 20, curY + 6, { align: 'right' });
+    curY += 11;
+  });
+
+  // Footer Disclaimer
+  doc.setFont('helvetica', 'italic');
+  doc.setFontSize(7);
+  doc.setTextColor(textMuted[0], textMuted[1], textMuted[2]);
+  doc.text('Hydra Positioning System | Generated on ' + new Date().toLocaleString('en-IN') + ' | Contains modified Copernicus Sentinel data', 14, pageHeight - 10);
+
+  const pdfBlob = doc.output('blob');
+  return { pdfBlob, filename };
+}
+
