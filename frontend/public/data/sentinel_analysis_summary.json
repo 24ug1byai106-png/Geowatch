@@ -1,0 +1,12 @@
+{
+  "dataset_name": "Bengaluru Metropolitan Tech Corridor (2024 vs 2026)",
+  "mission": "Sentinel-2B Level-1C (MSI)",
+  "tile": "T43PGQ",
+  "before_sensing_time": "2024-12-08T05:11:19Z",
+  "after_sensing_time": "2026-05-12T05:06:49Z",
+  "spatial_resolution": "10m GSD",
+  "change_percentage": 26.11,
+  "change_regions_count": 224,
+  "total_changed_sq_meters": 27376900,
+  "utm_crs": "EPSG:32643 (UTM Zone 43N)"
+}

@@ -16,6 +16,24 @@ export interface CalculatedChangeRegion {
   explanation: string;
 }
 
+export interface GovernmentCivicAudit {
+  newBuildingsConstructed: number;
+  builtUpAreaSqm: number;
+  highDensityClusters: number;
+  roadExpansionKm: number;
+  roadWidenedAreaSqm: number;
+  commercialInfrastructureCount: number;
+  treesFelledEstimated: number;
+  deforestedCanopySqm: number;
+  greenCoverLossPercent: number;
+  waterBodyShrinkageSqm: number;
+  wetlandEncroachmentRisk: 'Low' | 'Moderate' | 'Critical';
+  zoningComplianceScore: number;
+  unauthorizedEncroachmentsCount: number;
+  actionableRecommendation: string;
+  propertyTaxImpactEstimate: string;
+}
+
 export interface ImageAnalysisResult {
   totalChangeRegions: number;
   changedAreaPercentage: number;
@@ -29,6 +47,7 @@ export interface ImageAnalysisResult {
   structuralCount: number;
   vegetationCount: number;
   highIntensityCount: number;
+  governmentAudit: GovernmentCivicAudit;
 }
 
 export interface GeoJsonFeature {

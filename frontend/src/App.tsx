@@ -6,6 +6,7 @@ import { TemporalAnalysis } from './components/TemporalAnalysis';
 import { DetectionResults } from './components/DetectionResults';
 import { ObservationTelemetry } from './components/ObservationTelemetry';
 import { GisMapAnalysis } from './components/GisMapAnalysis';
+import { ChangeMapView } from './components/ChangeMapView';
 import { AiInsightsView } from './components/AiInsightsView';
 import { GeoDataView } from './components/GeoDataView';
 import { AnalyticsView } from './components/AnalyticsView';
@@ -13,21 +14,23 @@ import { ApiConsoleView } from './components/ApiConsoleView';
 import { AnalysisModal } from './components/AnalysisModal';
 import { ObjectDetailModal } from './components/ObjectDetailModal';
 import { DatabaseModal } from './components/DatabaseModal';
+import { GovernmentAuditPanel } from './components/GovernmentAuditPanel';
+import { AskGeoWatchModal } from './components/AskGeoWatchModal';
 import { LogsDrawer } from './components/LogsDrawer';
 import type { LogEntry } from './components/LogsDrawer';
 import { HelpModal } from './components/HelpModal';
-import { WHITEFIELD_DATASET, apiClient } from './api/client';
+import { SENTINEL_2024_2026_DATASET, apiClient } from './api/client';
 import { performImageChangeDetection } from './utils/imageProcessing';
 import type { PresetDataset, CalculatedChangeRegion } from './types';
 
 export const App: React.FC = () => {
   // Screen state
   const [activeScreen, setActiveScreen] = useState<string>('analysis');
-  const [selectedDataset, setSelectedDataset] = useState<PresetDataset>(WHITEFIELD_DATASET);
+  const [selectedDataset, setSelectedDataset] = useState<PresetDataset>(SENTINEL_2024_2026_DATASET);
   const [selectedObject, setSelectedObject] = useState<CalculatedChangeRegion | null>(null);
-  const [isBackendConnected, setIsBackendConnected] = useState<boolean>(false);
   const [isAnalysisModalOpen, setIsAnalysisModalOpen] = useState<boolean>(false);
   const [isDatabaseModalOpen, setIsDatabaseModalOpen] = useState<boolean>(false);
+  const [isAskAiOpen, setIsAskAiOpen] = useState<boolean>(false);
   const [isLogsOpen, setIsLogsOpen] = useState<boolean>(false);
   const [isHelpOpen, setIsHelpOpen] = useState<boolean>(false);
 
@@ -36,41 +39,55 @@ export const App: React.FC = () => {
     {
       id: 'log-1',
       time: new Date().toLocaleTimeString(),
-      message: 'GeoWatch Engine initialized. Target: Whitefield Sentinel-2 L2A observation dataset.',
+      message: 'GeoWatch Engine initialized. Target: Sentinel-2B (Tile T43PGQ) Bengaluru Metropolitan observation pair.',
       type: 'success'
     },
     {
       id: 'log-2',
       time: new Date().toLocaleTimeString(),
-      message: 'Loaded Whitefield baseline (whitefield_2024_optimized.tif) and comparison (whitefield_2025_optimized.tif).',
+      message: 'Autonomous atmospheric & cloud spectral masking filter engaged.',
       type: 'info'
     }
   ]);
 
   const addLog = (message: string, type: 'info' | 'success' | 'warn' | 'error' = 'info') => {
-    const newEntry: LogEntry = {
-      id: `log-${Date.now()}-${Math.random().toString(36).substr(2, 4)}`,
-      time: new Date().toLocaleTimeString(),
-      message,
-      type
-    };
-    setLogs(prev => [newEntry, ...prev]);
+    setLogs(prev => [
+      ...prev,
+      {
+        id: `log-${Date.now()}-${Math.random()}`,
+        time: new Date().toLocaleTimeString(),
+        message,
+        type
+      }
+    ]);
   };
+
+  // Initial connection check
+  useEffect(() => {
+    const checkConnection = async () => {
+      try {
+        await apiClient.checkHealth();
+      } catch {
+        // Local mode
+      }
+    };
+    checkConnection();
+  }, []);
 
   // Perform initial real image differencing on load
   useEffect(() => {
     const initAnalysis = async () => {
       try {
         const result = await performImageChangeDetection(
-          WHITEFIELD_DATASET.beforeImage,
-          WHITEFIELD_DATASET.afterImage,
+          SENTINEL_2024_2026_DATASET.beforeImage,
+          SENTINEL_2024_2026_DATASET.afterImage,
           38
         );
         setSelectedDataset(prev => ({
           ...prev,
           analysisResult: result
         }));
-        addLog(`Completed pixel differencing for Whitefield: detected ${result.totalChangeRegions} change regions (${result.changedAreaPercentage}% area modified).`, 'success');
+        addLog(`Completed pixel differencing for Sentinel-2 2024 vs 2026: detected ${result.totalChangeRegions} change regions (${result.changedAreaPercentage}% area modified).`, 'success');
       } catch (err) {
         console.error('Initial analysis error', err);
       }
@@ -81,15 +98,13 @@ export const App: React.FC = () => {
   // Heartbeat backend check
   useEffect(() => {
     const checkBackend = async () => {
-      const ok = await apiClient.checkHealth();
-      setIsBackendConnected(ok);
-      if (ok) {
-        addLog('FastAPI GeoWatch backend connected on localhost:8000', 'success');
+      try {
+        await apiClient.checkHealth();
+      } catch {
+        // Local mode
       }
     };
     checkBackend();
-    const interval = setInterval(checkBackend, 15000);
-    return () => clearInterval(interval);
   }, []);
 
   const handleDownloadReport = () => {
@@ -131,38 +146,18 @@ export const App: React.FC = () => {
     addLog(`Exported calculated JSON report for ${selectedDataset.name}`, 'success');
   };
 
-  // Mapping top nav tab to screen
-  const getNavTab = () => {
-    if (activeScreen === 'analysis') return 'ANALYSIS';
-    if (activeScreen === 'change_map') return 'CHANGE MAP';
-    if (activeScreen === 'ai_insights') return 'AI INSIGHTS';
-    if (activeScreen === 'analytics') return 'ANALYTICS';
-    return 'ANALYSIS';
-  };
-
-  const handleNavTabClick = (tab: string) => {
-    if (tab === 'ANALYSIS') setActiveScreen('analysis');
-    if (tab === 'CHANGE MAP') setActiveScreen('change_map');
-    if (tab === 'AI INSIGHTS') setActiveScreen('ai_insights');
-    if (tab === 'ANALYTICS') setActiveScreen('analytics');
-  };
-
   return (
     <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', backgroundColor: 'var(--bg-space)' }}>
       
-      {/* Top Mission Navbar */}
+      {/* Top Mission Navbar (Clean Header) */}
       <Navbar
-        activeTab={getNavTab()}
-        setActiveTab={handleNavTabClick}
-        isBackendConnected={isBackendConnected}
         onOpenLogs={() => setIsLogsOpen(true)}
-        onOpenDatabase={() => setIsDatabaseModalOpen(true)}
       />
 
       {/* Main Body */}
       <div style={{ display: 'flex', flex: 1, position: 'relative' }}>
         
-        {/* Left Sidebar */}
+        {/* Left Sidebar (Houses all Mission Features & Tools) */}
         <Sidebar
           activeScreen={activeScreen}
           setActiveScreen={(id) => {
@@ -170,6 +165,10 @@ export const App: React.FC = () => {
             addLog(`Switched view to: ${id.toUpperCase()}`, 'info');
           }}
           onInitiateAnalysis={() => setIsAnalysisModalOpen(true)}
+          onOpenAskAi={() => {
+            setIsAskAiOpen(true);
+            addLog('Launched Ask GeoWatch AI Assistant.', 'info');
+          }}
           onOpenLogs={() => setIsLogsOpen(true)}
           onOpenHelp={() => setIsHelpOpen(true)}
         />
@@ -184,8 +183,8 @@ export const App: React.FC = () => {
           gap: '18px'
         }}>
           
-          {/* SCREEN 1 & 2: MAIN ANALYSIS / CHANGE MAP SCREEN */}
-          {(activeScreen === 'analysis' || activeScreen === 'change_map') && (
+          {/* SCREEN 1: MAIN ANALYSIS SCREEN */}
+          {activeScreen === 'analysis' && (
             <>
               {/* Hero Banner & Status */}
               <HeroStatus
@@ -210,6 +209,15 @@ export const App: React.FC = () => {
                 />
               </div>
 
+              {/* Middle Section: Full Government & Civic Infrastructure Audit Panel */}
+              <GovernmentAuditPanel
+                dataset={selectedDataset}
+                onNavigateToInsights={() => {
+                  setActiveScreen('ai_insights');
+                  addLog('Navigated to Detailed Government AI Insights report.', 'info');
+                }}
+              />
+
               {/* Bottom Section: Observation Telemetry (Left) + AI Vision GIS Map (Right) */}
               <div style={{
                 display: 'grid',
@@ -226,6 +234,14 @@ export const App: React.FC = () => {
                 />
               </div>
             </>
+          )}
+
+          {/* SCREEN 2: DEDICATED CHANGE MAP & VECTOR POLYGON GIS SCREEN */}
+          {activeScreen === 'change_map' && (
+            <ChangeMapView
+              dataset={selectedDataset}
+              onSelectObject={(obj) => setSelectedObject(obj)}
+            />
           )}
 
           {/* SCREEN 3: AI INSIGHTS SCREEN */}
@@ -277,6 +293,12 @@ export const App: React.FC = () => {
       <DatabaseModal
         isOpen={isDatabaseModalOpen}
         onClose={() => setIsDatabaseModalOpen(false)}
+      />
+
+      <AskGeoWatchModal
+        isOpen={isAskAiOpen}
+        onClose={() => setIsAskAiOpen(false)}
+        dataset={selectedDataset}
       />
 
       <LogsDrawer

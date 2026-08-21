@@ -11,31 +11,44 @@ export interface GroqExplanationParams {
   changeIntensityLabel: string;
   largestRegionName: string;
   largestRegionArea: number;
+  governmentAudit?: {
+    newBuildingsConstructed: number;
+    builtUpAreaSqm: number;
+    roadExpansionKm: number;
+    treesFelledEstimated: number;
+    deforestedCanopySqm: number;
+    zoningComplianceScore: number;
+    unauthorizedEncroachmentsCount: number;
+    actionableRecommendation: string;
+    propertyTaxImpactEstimate: string;
+  };
 }
 
 /**
  * Generates an intelligent, authentic Earth-observation change detection analysis summary
- * using Groq's high-speed Llama 3.3 70B model.
+ * formatted for municipal/government oversight using Groq's high-speed Llama 3.3 70B model.
  */
 export async function generateGroqAiSummary(params: GroqExplanationParams): Promise<string> {
+  const audit = params.governmentAudit;
   const prompt = `
-You are the GeoWatch Earth Observation AI Analysis Engine (ISRO/SIH satellite intelligence).
-Analyze the following calculated satellite change detection metrics and write a concise, professional, 2-3 sentence technical summary of human-made changes and environmental impacts.
+You are the GeoWatch ISRO & SIH Earth Observation Government AI Intelligence Engine.
+Analyze the following multi-temporal satellite change detection metrics and write an authoritative, professional 2-3 sentence technical executive summary suitable for municipal planning, public administration, and environmental governance.
 
-METRICS:
-- Location / Target Region: ${params.locationName}
+METRICS & GOVERNMENT AUDIT:
+- Target Geographic Region: ${params.locationName}
 - Total Detected Change Regions: ${params.totalChangeRegions}
 - Modified Surface Area: ${params.changedAreaPercentage}% (~${params.totalChangedSqMeters.toLocaleString()} m²)
-- Potential Structural / Built-up Variations: ${params.structuralCount}
-- Potential Vegetation / Canopy Shifts: ${params.vegetationCount}
-- High-Intensity Surface Shifts: ${params.highIntensityCount}
+- New Buildings / Built-up Structures: ~${audit?.newBuildingsConstructed || params.structuralCount} units (~${(audit?.builtUpAreaSqm || 0).toLocaleString()} m²)
+- Road & Transport Network Expansion: ~${audit?.roadExpansionKm || 0} km
+- Estimated Tree Canopy Clearing / Trees Felled: ~${audit?.treesFelledEstimated || 0} trees (~${(audit?.deforestedCanopySqm || 0).toLocaleString()} m²)
+- Zoning Compliance Score: ${audit?.zoningComplianceScore || 85}% (Unauthorized Encroachments: ~${audit?.unauthorizedEncroachmentsCount || 0})
+- Estimated Property / Municipal Value Addition: ${audit?.propertyTaxImpactEstimate || 'Substantial'}
 - Overall Change Severity: ${params.changeIntensityLabel}
-- Largest Contiguous Change Cluster: ${params.largestRegionName} (${params.largestRegionArea.toLocaleString()} m²)
 
 INSTRUCTIONS:
-- Be precise, authoritative, and professional in an aerospace/remote-sensing style.
-- Highlight specific human activities (such as urban construction, road infrastructure, or canopy clearing).
-- Output ONLY the 2-3 sentence paragraph. Do not include markdown bullet points or extra commentary.
+- Specifically mention the structural expansion (buildings constructed), transportation widening, and environmental canopy impact.
+- Maintain an authoritative civic audit and remote-sensing intelligence tone.
+- Output ONLY the 2-3 sentence paragraph.
 `;
 
   try {

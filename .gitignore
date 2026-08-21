@@ -30,6 +30,16 @@ ENV/
 env.bak/
 venv.bak/
 
+# Raw Large Satellite Datasets & Granules
+*.SAFE/
+*.SAFE
+*.jp2
+*.zip
+*.tar.gz
+*.tif
+*.tiff
+!frontend/public/data/*.png
+
 # Editor / OS
 .DS_Store
 Thumbs.db

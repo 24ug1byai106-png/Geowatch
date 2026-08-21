@@ -17,12 +17,17 @@ def process_analysis_background(job_id: str):
         job.status = AnalysisStatus.PROCESSING
         db.commit()
 
-        # In a real scenario we'd fetch the actual image paths
-        # before_img = job.before_image.file_path
-        # after_img = job.after_image.file_path
+        import os
+        before_path = job.before_image.file_path if job.before_image else "uploads/sentinel_2024_bengaluru.png"
+        after_path = job.after_image.file_path if job.after_image else "uploads/sentinel_2026_bengaluru.png"
         
-        # Run inference
-        results = ai_pipeline.run_inference("dummy_path_1", "dummy_path_2")
+        if not os.path.exists(before_path):
+            before_path = os.path.join(os.path.dirname(__file__), "..", "..", "uploads", "sentinel_2024_bengaluru.png")
+        if not os.path.exists(after_path):
+            after_path = os.path.join(os.path.dirname(__file__), "..", "..", "uploads", "sentinel_2026_bengaluru.png")
+
+        # Run OpenCV differencing & contour extraction
+        results = ai_pipeline.run_inference(before_path, after_path)
         
         # Save results
         job.change_percentage = results.get("change_percentage")

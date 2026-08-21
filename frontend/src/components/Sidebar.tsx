@@ -5,16 +5,17 @@ import {
   Sparkles, 
   Database, 
   BarChart3, 
-  Terminal, 
   HelpCircle, 
   History,
-  Plus
+  Plus,
+  Bot
 } from 'lucide-react';
 
 interface SidebarProps {
   activeScreen: string;
   setActiveScreen: (id: string) => void;
   onInitiateAnalysis: () => void;
+  onOpenAskAi?: () => void;
   onOpenLogs: () => void;
   onOpenHelp: () => void;
 }
@@ -23,44 +24,44 @@ export const Sidebar: React.FC<SidebarProps> = ({
   activeScreen,
   setActiveScreen,
   onInitiateAnalysis,
+  onOpenAskAi,
   onOpenLogs,
   onOpenHelp
 }) => {
   const navItems = [
-    { id: 'analysis', label: 'ANALYSIS', sublabel: 'Before / After', symbol: '◈', icon: Layers },
-    { id: 'change_map', label: 'CHANGE MAP', sublabel: 'Detected Changes', symbol: '◉', icon: Globe },
-    { id: 'ai_insights', label: 'AI INSIGHTS', sublabel: 'AI Explanation', symbol: '◎', icon: Sparkles },
-    { id: 'geo_data', label: 'GEO DATA', sublabel: 'GeoJSON / Polygons', symbol: '◇', icon: Database },
-    { id: 'analytics', label: 'ANALYTICS', sublabel: 'Historical Changes', symbol: '▣', icon: BarChart3 },
-    { id: 'api', label: 'API', sublabel: 'System Integration', symbol: '⌘', icon: Terminal },
+    { id: 'analysis', label: 'ANALYSIS', sublabel: 'Before / After Differencing', symbol: '◈', icon: Layers },
+    { id: 'change_map', label: 'CHANGE MAP', sublabel: 'Geographic Polygons', symbol: '◉', icon: Globe },
+    { id: 'ai_insights', label: 'AI INSIGHTS', sublabel: 'Government & Civic Audit', symbol: '◎', icon: Sparkles },
+    { id: 'geo_data', label: 'EXPORT DATA', sublabel: 'Polygons & GeoJSON', symbol: '◇', icon: Database },
+    { id: 'analytics', label: 'TIMELINE', sublabel: 'Multi-Year History', symbol: '▣', icon: BarChart3 },
   ];
 
   return (
     <aside style={{
-      width: '240px',
+      width: '260px',
       background: 'var(--bg-panel)',
       borderRight: '1px solid var(--border-amber)',
       display: 'flex',
       flexDirection: 'column',
       justifyContent: 'space-between',
-      height: 'calc(100vh - 55px)',
+      height: 'calc(100vh - 58px)',
       position: 'sticky',
-      top: '55px',
-      padding: '14px 10px',
+      top: '58px',
+      padding: '14px 12px',
       flexShrink: 0
     }}>
       
-      {/* Top Section: GeoWatch Status Card & Actions */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+      {/* Top Section: Status Card, Actions & Navigation */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
         
-        {/* GeoWatch Earth Observation Card */}
+        {/* GeoWatch Earth Observation Status Card */}
         <div style={{
           border: '1px solid var(--border-dim)',
-          background: 'rgba(19, 27, 40, 0.6)',
+          background: 'rgba(19, 27, 40, 0.7)',
           padding: '10px 12px',
           display: 'flex',
           flexDirection: 'column',
-          gap: '6px'
+          gap: '5px'
         }}>
           <div style={{
             fontFamily: 'var(--font-tech)',
@@ -84,36 +85,51 @@ export const Sidebar: React.FC<SidebarProps> = ({
           }}>
             EARTH OBSERVATION SYSTEM
           </div>
-
-          <div style={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            fontFamily: 'var(--font-mono)',
-            fontSize: '0.6rem',
-            borderTop: '1px solid rgba(255, 153, 0, 0.15)',
-            paddingTop: '4px',
-            marginTop: '2px',
-            color: 'var(--text-dim)'
-          }}>
-            <span>ENGINE: <strong style={{ color: 'var(--accent-amber)' }}>READY</strong></span>
-            <span>POSTGIS: <strong style={{ color: '#10b981' }}>CONNECTED</strong></span>
-          </div>
         </div>
 
-        {/* New Analysis Action Button */}
-        <button
-          onClick={onInitiateAnalysis}
-          className="hud-btn-primary"
-          style={{
-            width: '100%',
-            letterSpacing: '0.08em',
-            padding: '9px 12px',
-            fontSize: '0.78rem'
-          }}
-        >
-          <Plus size={15} />
-          NEW ANALYSIS
-        </button>
+        {/* Action Buttons: New Analysis + Ask GeoWatch AI */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+          <button
+            onClick={onInitiateAnalysis}
+            className="hud-btn-primary"
+            style={{
+              width: '100%',
+              letterSpacing: '0.08em',
+              padding: '8px 12px',
+              fontSize: '0.78rem'
+            }}
+          >
+            <Plus size={15} />
+            NEW ANALYSIS
+          </button>
+
+          {onOpenAskAi && (
+            <button
+              onClick={onOpenAskAi}
+              style={{
+                width: '100%',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '8px',
+                padding: '8px 12px',
+                background: 'rgba(0, 240, 255, 0.12)',
+                border: '1px solid rgba(0, 240, 255, 0.6)',
+                color: '#00f0ff',
+                fontFamily: 'var(--font-mono)',
+                fontSize: '0.74rem',
+                fontWeight: 700,
+                letterSpacing: '0.06em',
+                cursor: 'pointer',
+                boxShadow: '0 0 12px rgba(0, 240, 255, 0.15)',
+                transition: 'all 0.2s ease'
+              }}
+            >
+              <Bot size={15} />
+              <span>ASK GEOWATCH AI</span>
+            </button>
+          )}
+        </div>
 
         {/* Navigation Heading */}
         <div style={{
@@ -121,14 +137,16 @@ export const Sidebar: React.FC<SidebarProps> = ({
           fontSize: '0.65rem',
           color: 'var(--text-dim)',
           letterSpacing: '0.1em',
-          padding: '0 4px',
-          textTransform: 'uppercase'
+          padding: '2px 4px',
+          textTransform: 'uppercase',
+          borderTop: '1px solid var(--border-dim)',
+          paddingTop: '8px'
         }}>
-          MISSION CONTROL
+          ALL MISSION FEATURES
         </div>
 
-        {/* Navigation Items */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '3px' }}>
+        {/* Navigation Items in Left Column */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
           {navItems.map((item) => {
             const isActive = activeScreen === item.id;
             return (
@@ -139,14 +157,14 @@ export const Sidebar: React.FC<SidebarProps> = ({
                   display: 'flex',
                   alignItems: 'center',
                   gap: '10px',
-                  padding: '8px 12px',
-                  background: isActive ? '#ff9900' : 'transparent',
-                  color: isActive ? '#07090e' : 'var(--text-dim)',
-                  border: 'none',
+                  padding: '9px 12px',
+                  background: isActive ? '#ff9900' : 'rgba(10, 14, 20, 0.4)',
+                  color: isActive ? '#07090e' : '#cbd5e1',
+                  border: '1px solid ' + (isActive ? '#ff9900' : 'rgba(255, 255, 255, 0.04)'),
                   borderRadius: '2px',
                   fontFamily: 'var(--font-mono)',
-                  fontSize: '0.75rem',
-                  fontWeight: isActive ? 700 : 500,
+                  fontSize: '0.76rem',
+                  fontWeight: isActive ? 800 : 500,
                   letterSpacing: '0.04em',
                   cursor: 'pointer',
                   textAlign: 'left',
@@ -155,7 +173,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 }}
               >
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <span style={{ fontSize: '0.85rem' }}>{item.symbol}</span>
+                  <span style={{ fontSize: '0.9rem', color: isActive ? '#07090e' : 'var(--accent-amber)' }}>
+                    {item.symbol}
+                  </span>
                   <div>
                     <div>{item.label}</div>
                     <div style={{
@@ -167,7 +187,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                     </div>
                   </div>
                 </div>
-                {isActive && <span style={{ width: '4px', height: '4px', backgroundColor: '#07090e' }} />}
+                {isActive && <span style={{ width: '5px', height: '5px', backgroundColor: '#07090e' }} />}
               </button>
             );
           })}
@@ -187,14 +207,14 @@ export const Sidebar: React.FC<SidebarProps> = ({
             border: 'none',
             color: 'var(--text-dim)',
             fontFamily: 'var(--font-mono)',
-            fontSize: '0.75rem',
+            fontSize: '0.74rem',
             padding: '6px 8px',
             cursor: 'pointer',
             textAlign: 'left'
           }}
         >
           <HelpCircle size={14} />
-          <span>? Help</span>
+          <span>? Mission Documentation</span>
         </button>
 
         <button
@@ -207,14 +227,14 @@ export const Sidebar: React.FC<SidebarProps> = ({
             border: 'none',
             color: 'var(--text-dim)',
             fontFamily: 'var(--font-mono)',
-            fontSize: '0.75rem',
+            fontSize: '0.74rem',
             padding: '6px 8px',
             cursor: 'pointer',
             textAlign: 'left'
           }}
         >
           <History size={14} />
-          <span>◷ Analysis Logs</span>
+          <span>◷ Diagnostic Logs</span>
         </button>
       </div>
 

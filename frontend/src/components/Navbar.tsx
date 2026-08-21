@@ -1,20 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { Bell, User, Database, Globe2 } from 'lucide-react';
+import { Bell, User, Globe2 } from 'lucide-react';
 
 interface NavbarProps {
-  activeTab: string;
-  setActiveTab: (tab: string) => void;
-  isBackendConnected: boolean;
   onOpenLogs: () => void;
-  onOpenDatabase: () => void;
 }
 
 export const Navbar: React.FC<NavbarProps> = ({
-  activeTab,
-  setActiveTab,
-  isBackendConnected,
-  onOpenLogs,
-  onOpenDatabase
+  onOpenLogs
 }) => {
   const [time, setTime] = useState<string>('');
   const [utcTime, setUtcTime] = useState<string>('');
@@ -30,31 +22,29 @@ export const Navbar: React.FC<NavbarProps> = ({
     return () => clearInterval(interval);
   }, []);
 
-  const navItems = ['ANALYSIS', 'CHANGE MAP', 'AI INSIGHTS', 'ANALYTICS'];
-
   return (
     <header className="hud-panel" style={{ borderBottom: '1px solid var(--border-amber)', background: 'rgba(11, 15, 22, 0.96)', backdropFilter: 'blur(8px)', position: 'sticky', top: 0, zIndex: 100 }}>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 24px' }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 24px' }}>
         
-        {/* Left: GeoWatch Branding */}
+        {/* Left: GeoWatch Mission Branding & Live Telemetry Clock */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
           <div style={{
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            width: '34px',
-            height: '34px',
+            width: '36px',
+            height: '36px',
             border: '1px solid var(--accent-amber)',
-            background: 'rgba(255, 153, 0, 0.1)',
+            background: 'rgba(255, 153, 0, 0.12)',
             color: 'var(--accent-amber)',
-            boxShadow: '0 0 12px rgba(255, 153, 0, 0.25)'
+            boxShadow: '0 0 12px rgba(255, 153, 0, 0.3)'
           }}>
-            <Globe2 size={20} />
+            <Globe2 size={22} />
           </div>
           <div>
             <h1 style={{
               fontFamily: 'var(--font-tech)',
-              fontSize: '1.2rem',
+              fontSize: '1.25rem',
               fontWeight: 800,
               letterSpacing: '0.1em',
               color: '#ff9900',
@@ -74,116 +64,22 @@ export const Navbar: React.FC<NavbarProps> = ({
           </div>
         </div>
 
-        {/* Center: Main Navigation Tabs */}
-        <nav style={{ display: 'flex', alignItems: 'center', gap: '30px' }}>
-          {navItems.map((item) => {
-            const isActive = activeTab === item;
-            return (
-              <button
-                key={item}
-                onClick={() => setActiveTab(item)}
-                style={{
-                  background: 'none',
-                  border: 'none',
-                  color: isActive ? '#ff9900' : 'var(--text-dim)',
-                  fontFamily: 'var(--font-mono)',
-                  fontSize: '0.82rem',
-                  fontWeight: isActive ? 700 : 500,
-                  letterSpacing: '0.08em',
-                  cursor: 'pointer',
-                  padding: '8px 4px',
-                  position: 'relative',
-                  transition: 'all 0.2s ease'
-                }}
-              >
-                {item}
-                {isActive && (
-                  <div style={{
-                    position: 'absolute',
-                    bottom: '-9px',
-                    left: 0,
-                    right: 0,
-                    height: '2px',
-                    backgroundColor: '#ff9900',
-                    boxShadow: '0 0 8px #ff9900'
-                  }} />
-                )}
-              </button>
-            );
-          })}
-        </nav>
-
-        {/* Right: Status Badges & Controls */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
-          
-          {/* PostGIS Database Status */}
-          <div
-            onClick={onOpenDatabase}
-            title="Click to view Geospatial PostGIS Database status"
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '6px',
-              border: '1px solid rgba(255, 153, 0, 0.4)',
-              padding: '4px 10px',
-              background: 'rgba(255, 153, 0, 0.08)',
-              fontSize: '0.7rem',
-              fontFamily: 'var(--font-mono)',
-              cursor: 'pointer'
-            }}
+        {/* Right: Mission Operator & Logs */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--text-dim)' }}>
+          <button 
+            onClick={onOpenLogs} 
+            title="Analysis Diagnostic Logs"
+            style={{ background: 'rgba(255, 255, 255, 0.05)', border: '1px solid var(--border-dim)', color: 'var(--text-dim)', padding: '6px 9px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.72rem', fontFamily: 'var(--font-mono)' }}
           >
-            <Database size={13} color="var(--accent-amber)" />
-            <span style={{ color: 'var(--text-dim)' }}>POSTGIS</span>
-            <span style={{ color: '#10b981', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '4px' }}>
-              <span style={{ width: '6px', height: '6px', backgroundColor: '#10b981', display: 'inline-block' }} />
-              CONNECTED
-            </span>
-          </div>
-
-          {/* Backend API Status */}
-          <div 
-            onClick={onOpenLogs}
-            title={isBackendConnected ? "FastAPI Backend Connected" : "Running on Simulated Telemetry Mode (Click for logs)"}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '6px',
-              border: isBackendConnected ? '1px solid rgba(16, 185, 129, 0.4)' : '1px solid var(--border-amber)',
-              padding: '4px 10px',
-              background: isBackendConnected ? 'rgba(16, 185, 129, 0.1)' : 'rgba(255, 153, 0, 0.08)',
-              fontSize: '0.7rem',
-              fontFamily: 'var(--font-mono)',
-              cursor: 'pointer'
-            }}
+            <Bell size={14} />
+            <span>LOGS</span>
+          </button>
+          <button 
+            title="GeoWatch Mission Operator"
+            style={{ background: 'rgba(255, 255, 255, 0.05)', border: '1px solid var(--border-dim)', color: 'var(--text-dim)', padding: '6px 8px', cursor: 'pointer', display: 'flex', alignItems: 'center' }}
           >
-            <span style={{
-              width: '6px',
-              height: '6px',
-              backgroundColor: isBackendConnected ? '#10b981' : '#ff9900',
-              boxShadow: isBackendConnected ? '0 0 6px #10b981' : '0 0 6px #ff9900'
-            }} />
-            <span style={{ color: isBackendConnected ? '#10b981' : '#ff9900', fontWeight: 600 }}>
-              {isBackendConnected ? "API ONLINE" : "ENGINE READY"}
-            </span>
-          </div>
-
-          {/* Quick Icons */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--text-dim)' }}>
-            <button 
-              onClick={onOpenLogs} 
-              title="Analysis Logs"
-              style={{ background: 'none', border: '1px solid var(--border-dim)', color: 'var(--text-dim)', padding: '5px 7px', cursor: 'pointer', display: 'flex', alignItems: 'center' }}
-            >
-              <Bell size={14} />
-            </button>
-            <button 
-              title="GeoWatch Mission Operator"
-              style={{ background: 'none', border: '1px solid var(--border-dim)', color: 'var(--text-dim)', padding: '5px 7px', cursor: 'pointer', display: 'flex', alignItems: 'center' }}
-            >
-              <User size={14} />
-            </button>
-          </div>
-
+            <User size={15} />
+          </button>
         </div>
 
       </div>

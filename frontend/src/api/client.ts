@@ -2,6 +2,22 @@ import type { AnalysisJob, GeoJsonCollection, AnalysisExplanation, PresetDataset
 
 const API_BASE_URL = 'http://localhost:8000/api/v1';
 
+export const SENTINEL_2024_2026_DATASET: PresetDataset = {
+  id: 'bengaluru-sentinel-2024-2026',
+  name: 'Bengaluru — Sentinel-2 L1C Observation (2024 vs 2026)',
+  region: 'Bengaluru Tech Corridor, Karnataka, India',
+  regionType: 'Metropolitan & Infrastructure Expansion',
+  dataSource: 'Sentinel-2B MSI (Tile T43PGQ)',
+  coordinates: [12.9716, 77.5946],
+  beforeYear: '2024',
+  afterYear: '2026',
+  beforeImage: '/data/sentinel_2024_bengaluru.png',
+  afterImage: '/data/sentinel_2026_bengaluru.png',
+  beforeTifName: 'S2B_20241208_T43PGQ.jp2',
+  afterTifName: 'S2B_20260512_T43PGQ.jp2',
+  analysisResult: null
+};
+
 export const WHITEFIELD_DATASET: PresetDataset = {
   id: 'whitefield-bengaluru',
   name: 'Whitefield — IT & Urban Expansion',
@@ -15,10 +31,11 @@ export const WHITEFIELD_DATASET: PresetDataset = {
   afterImage: '/data/whitefield_2025_preview.png',
   beforeTifName: 'whitefield_2024_optimized.tif',
   afterTifName: 'whitefield_2025_optimized.tif',
-  analysisResult: null // Computed on demand via actual image differencing!
+  analysisResult: null
 };
 
 export const GEOWATCH_DATASETS: PresetDataset[] = [
+  SENTINEL_2024_2026_DATASET,
   WHITEFIELD_DATASET
 ];
 
