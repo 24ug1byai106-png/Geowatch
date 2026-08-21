@@ -31,7 +31,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   const navItems = [
     { id: 'analysis', label: 'ANALYSIS', sublabel: 'Before / After Differencing', symbol: '◈', icon: Layers },
     { id: 'change_map', label: 'CHANGE MAP', sublabel: 'Geographic Polygons', symbol: '◉', icon: Globe },
-    { id: 'ai_insights', label: 'AI INSIGHTS', sublabel: 'Government & Civic Audit', symbol: '◎', icon: Sparkles },
+    { id: 'government', label: 'GOVERNMENT AUDIT', sublabel: 'Roads, Buildings & Trees', symbol: '🏛️', icon: Sparkles },
     { id: 'geo_data', label: 'EXPORT DATA', sublabel: 'Polygons & GeoJSON', symbol: '◇', icon: Database },
     { id: 'analytics', label: 'TIMELINE', sublabel: 'Multi-Year History', symbol: '▣', icon: BarChart3 },
   ];

@@ -209,15 +209,6 @@ export const App: React.FC = () => {
                 />
               </div>
 
-              {/* Middle Section: Full Government & Civic Infrastructure Audit Panel */}
-              <GovernmentAuditPanel
-                dataset={selectedDataset}
-                onNavigateToInsights={() => {
-                  setActiveScreen('ai_insights');
-                  addLog('Navigated to Detailed Government AI Insights report.', 'info');
-                }}
-              />
-
               {/* Bottom Section: Observation Telemetry (Left) + AI Vision GIS Map (Right) */}
               <div style={{
                 display: 'grid',
@@ -244,9 +235,17 @@ export const App: React.FC = () => {
             />
           )}
 
-          {/* SCREEN 3: AI INSIGHTS SCREEN */}
-          {activeScreen === 'ai_insights' && (
-            <AiInsightsView dataset={selectedDataset} />
+          {/* SCREEN 3: DEDICATED GOVERNMENT & CIVIC AUDIT SCREEN */}
+          {(activeScreen === 'government' || activeScreen === 'ai_insights') && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+              <GovernmentAuditPanel
+                dataset={selectedDataset}
+                onNavigateToInsights={() => {
+                  setActiveScreen('government');
+                }}
+              />
+              <AiInsightsView dataset={selectedDataset} />
+            </div>
           )}
 
           {/* SCREEN 4: GEO DATA REPOSITORY */}
