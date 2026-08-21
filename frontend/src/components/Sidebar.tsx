@@ -3,7 +3,6 @@ import {
   Globe, 
   Layers, 
   Sparkles, 
-  BarChart3, 
   HelpCircle, 
   History,
   Plus,
@@ -35,7 +34,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
     { id: 'change_map', label: 'CHANGE MAP', sublabel: 'Geographic Polygons', symbol: '◉', icon: Globe },
     { id: 'monitoring', label: 'GOVERNMENT ALERTS', sublabel: 'Field Verification Queue', symbol: '🛡️', icon: ShieldAlert, badge: alertCount > 0 ? alertCount : undefined },
     { id: 'government', label: 'CIVIC AUDIT', sublabel: 'Roads, Buildings & Trees Report', symbol: '🏛️', icon: Sparkles },
-    { id: 'analytics', label: 'TIMELINE', sublabel: 'Multi-Year History', symbol: '▣', icon: BarChart3 },
   ];
 
   return (
