@@ -81,9 +81,9 @@ export const ChangeMapView: React.FC<ChangeMapViewProps> = ({ dataset, onSelectO
     dark: 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png'
   };
 
-  const structCount = rawRegions.filter(r => r.category === 'structure').length;
-  const vegCount = rawRegions.filter(r => r.category === 'vegetation').length;
-  const highCount = rawRegions.filter(r => r.category === 'high_intensity').length;
+  const matchingStruct = rawRegions.filter(r => r.category === 'structure' && r.confidence >= confidenceThreshold).length;
+  const matchingVeg = rawRegions.filter(r => r.category === 'vegetation' && r.confidence >= confidenceThreshold).length;
+  const matchingRoad = rawRegions.filter(r => r.category === 'high_intensity' && r.confidence >= confidenceThreshold).length;
 
   const handleCardClick = (region: CalculatedChangeRegion) => {
     const relX = region.x / 100;
@@ -148,9 +148,9 @@ export const ChangeMapView: React.FC<ChangeMapViewProps> = ({ dataset, onSelectO
               step={1}
               value={confidenceThreshold}
               onChange={(e) => setConfidenceThreshold(Number(e.target.value))}
-              style={{ width: '100px', accentColor: '#00f0ff', cursor: 'pointer' }}
+              style={{ width: '90px', accentColor: '#00f0ff', cursor: 'pointer' }}
             />
-            <span style={{ color: '#00f0ff', fontFamily: 'var(--font-mono)', fontWeight: 'bold', fontSize: '0.74rem', minWidth: '32px' }}>
+            <span style={{ color: '#00f0ff', fontFamily: 'var(--font-mono)', fontWeight: 'bold', fontSize: '0.72rem', minWidth: '36px' }}>
               &ge;{confidenceThreshold}%
             </span>
           </div>
@@ -158,10 +158,10 @@ export const ChangeMapView: React.FC<ChangeMapViewProps> = ({ dataset, onSelectO
         </div>
       </div>
 
-      {/* Main Map + Side Polygon Inspector Grid */}
+      {/* Main Map + Object Inspector Grid */}
       <div style={{
         display: 'grid',
-        gridTemplateColumns: 'minmax(0, 2.5fr) minmax(320px, 1fr)',
+        gridTemplateColumns: 'minmax(0, 1.8fr) minmax(340px, 1fr)',
         gap: '16px',
         alignItems: 'stretch',
         minHeight: '620px'
@@ -180,10 +180,10 @@ export const ChangeMapView: React.FC<ChangeMapViewProps> = ({ dataset, onSelectO
             flexWrap: 'wrap'
           }}>
             {[
-              { id: 'all', label: `ALL SITES (${filteredRegions.length}/${rawRegions.length})` },
-              { id: 'structure', label: `🏢 BUILDING STRUCTURES (${structCount})` },
-              { id: 'vegetation', label: `🌳 TREES & VEGETATION (${vegCount})` },
-              { id: 'high_intensity', label: `🛣️ ROAD CORRIDORS (${highCount})` }
+              { id: 'all', label: `ALL SITES (${filteredRegions.length})` },
+              { id: 'structure', label: `🏢 BUILDING STRUCTURES (${matchingStruct})` },
+              { id: 'vegetation', label: `🌳 TREES & VEGETATION (${matchingVeg})` },
+              { id: 'high_intensity', label: `🛣️ ROAD CORRIDORS (${matchingRoad})` }
             ].map((cat) => (
               <button
                 key={cat.id}
