@@ -107,60 +107,7 @@ export const DetectionResults: React.FC<DetectionResultsProps> = ({ dataset, onD
 
         </div>
 
-        {/* Government & Civic Infrastructure Breakdown (Requirement: Buildings, Roads, Trees) */}
-        {isAnalyzed && result.governmentAudit && (
-          <div style={{
-            background: 'rgba(16, 24, 39, 0.7)',
-            border: '1px solid rgba(0, 240, 255, 0.3)',
-            padding: '10px 12px',
-            display: 'flex',
-            flexDirection: 'column',
-            gap: '8px'
-          }}>
-            <div style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              fontSize: '0.68rem',
-              fontFamily: 'var(--font-mono)',
-              color: '#00f0ff',
-              fontWeight: 'bold',
-              borderBottom: '1px solid rgba(0, 240, 255, 0.15)',
-              paddingBottom: '4px'
-            }}>
-              <span>GOVERNMENT & CIVIC CHANGE AUDIT</span>
-              <span style={{ color: '#10b981' }}>ZONING: {result.governmentAudit.zoningComplianceScore}%</span>
-            </div>
-
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '8px', textAlign: 'center', fontFamily: 'var(--font-mono)' }}>
-              <div style={{ background: 'rgba(255, 153, 0, 0.08)', padding: '6px 4px', border: '1px solid rgba(255, 153, 0, 0.2)' }}>
-                <div style={{ fontSize: '0.58rem', color: 'var(--text-dim)' }}>NEW BUILDINGS</div>
-                <div style={{ fontFamily: 'var(--font-tech)', fontSize: '1.1rem', color: '#ff9900', fontWeight: 'bold' }}>
-                  +{result.governmentAudit.newBuildingsConstructed}
-                </div>
-                <div style={{ fontSize: '0.55rem', color: '#94a3b8' }}>~{(result.governmentAudit.builtUpAreaSqm).toLocaleString()} m²</div>
-              </div>
-
-              <div style={{ background: 'rgba(96, 165, 250, 0.08)', padding: '6px 4px', border: '1px solid rgba(96, 165, 250, 0.2)' }}>
-                <div style={{ fontSize: '0.58rem', color: 'var(--text-dim)' }}>ROADS EXPANDED</div>
-                <div style={{ fontFamily: 'var(--font-tech)', fontSize: '1.1rem', color: '#60a5fa', fontWeight: 'bold' }}>
-                  +{result.governmentAudit.roadExpansionKm} km
-                </div>
-                <div style={{ fontSize: '0.55rem', color: '#94a3b8' }}>transport corridor</div>
-              </div>
-
-              <div style={{ background: 'rgba(244, 63, 94, 0.08)', padding: '6px 4px', border: '1px solid rgba(244, 63, 94, 0.2)' }}>
-                <div style={{ fontSize: '0.58rem', color: 'var(--text-dim)' }}>TREES FELLED (EST)</div>
-                <div style={{ fontFamily: 'var(--font-tech)', fontSize: '1.1rem', color: '#f43f5e', fontWeight: 'bold' }}>
-                  ~{result.governmentAudit.treesFelledEstimated}
-                </div>
-                <div style={{ fontSize: '0.55rem', color: '#94a3b8' }}>canopy clearing</div>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Dynamic AI Summary derived strictly from computed results (Requirement #10) */}
+        {/* Dynamic AI Summary derived strictly from computed results */}
         <div style={{
           background: 'rgba(255, 153, 0, 0.05)',
           border: '1px solid var(--border-amber)',
@@ -183,7 +130,7 @@ export const DetectionResults: React.FC<DetectionResultsProps> = ({ dataset, onD
           }}>
             {isAnalyzed
               ? result.aiSummary
-              : 'Execute "INITIATE ANALYSIS" to run pixel differencing and generate dynamic statistical explanation from the Whitefield observation pair.'}
+              : 'Execute "INITIATE ANALYSIS" to run pixel differencing and generate dynamic statistical explanation from the observation pair.'}
           </p>
         </div>
 
@@ -204,7 +151,7 @@ export const DetectionResults: React.FC<DetectionResultsProps> = ({ dataset, onD
           </div>
           <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--text-dim)' }}>
             <span>SOURCE DATA:</span>
-            <span style={{ color: '#60a5fa' }}>Sentinel-2 L2A (Whitefield 2024 / 2025)</span>
+            <span style={{ color: '#60a5fa' }}>{dataset.dataSource} ({dataset.beforeYear} / {dataset.afterYear})</span>
           </div>
         </div>
 
