@@ -10,8 +10,8 @@ export const TemporalAnalysis: React.FC<TemporalAnalysisProps> = ({ dataset, onS
   const [viewMode, setViewMode] = useState<'SPLIT VIEW' | 'SWIPE' | 'OVERLAY' | 'CHANGE MAP'>('SPLIT VIEW');
   const [swipePos, setSwipePos] = useState<number>(50);
   const [overlayOpacity, setOverlayOpacity] = useState<number>(50);
-  const [showOverlays, setShowOverlays] = useState<boolean>(true);
-  const [activeCategoryFilter, setActiveCategoryFilter] = useState<'all' | 'structure' | 'vegetation' | 'high_intensity'>('all');
+  // Default to null so overlays ONLY appear when the user clicks a category
+  const [activeCategoryFilter, setActiveCategoryFilter] = useState<'structure' | 'vegetation' | 'high_intensity' | null>(null);
   const [isHoveringObject, setIsHoveringObject] = useState<string | null>(null);
 
   const containerRef = useRef<HTMLDivElement>(null);
@@ -27,9 +27,10 @@ export const TemporalAnalysis: React.FC<TemporalAnalysisProps> = ({ dataset, onS
 
   const analysis = dataset.analysisResult;
   const rawRegions = analysis?.regions || [];
-  const changeRegions = rawRegions.filter(r => 
-    activeCategoryFilter === 'all' || r.category === activeCategoryFilter
-  );
+  // Only show regions if a category is actively clicked/selected
+  const changeRegions = activeCategoryFilter
+    ? rawRegions.filter(r => r.category === activeCategoryFilter)
+    : [];
 
   return (
     <div className="hud-panel" style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
@@ -41,51 +42,30 @@ export const TemporalAnalysis: React.FC<TemporalAnalysisProps> = ({ dataset, onS
           <span>TEMPORAL CHANGE ANALYSIS // {dataset.beforeYear} VS {dataset.afterYear}</span>
         </div>
 
-        {/* View Mode Switcher + Overlays Toggle */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-          
-          <button
-            onClick={() => setShowOverlays(!showOverlays)}
-            style={{
-              background: showOverlays ? 'rgba(0, 240, 255, 0.15)' : 'rgba(255, 255, 255, 0.05)',
-              color: showOverlays ? '#00f0ff' : 'var(--text-dim)',
-              border: `1px solid ${showOverlays ? '#00f0ff' : 'var(--border-dim)'}`,
-              padding: '3px 8px',
-              fontSize: '0.65rem',
-              fontFamily: 'var(--font-mono)',
-              fontWeight: 700,
-              cursor: 'pointer',
-              borderRadius: '2px',
-              transition: 'all 0.15s ease'
-            }}
-          >
-            OVERLAYS: {showOverlays ? '● ON' : '○ OFF'}
-          </button>
-
-          <div style={{ display: 'flex', gap: '4px' }}>
-            {(['SPLIT VIEW', 'SWIPE', 'OVERLAY', 'CHANGE MAP'] as const).map((mode) => {
-              const isActive = viewMode === mode;
-              return (
-                <button
-                  key={mode}
-                  onClick={() => setViewMode(mode)}
-                  style={{
-                    background: isActive ? 'var(--accent-amber)' : 'transparent',
-                    color: isActive ? '#07090e' : 'var(--text-dim)',
-                    border: '1px solid ' + (isActive ? 'var(--accent-amber)' : 'var(--border-dim)'),
-                    padding: '3px 8px',
-                    fontSize: '0.65rem',
-                    fontFamily: 'var(--font-mono)',
-                    fontWeight: isActive ? 700 : 500,
-                    cursor: 'pointer',
-                    transition: 'all 0.15s ease'
-                  }}
-                >
-                  {mode}
-                </button>
-              );
-            })}
-          </div>
+        {/* View Mode Switcher */}
+        <div style={{ display: 'flex', gap: '4px' }}>
+          {(['SPLIT VIEW', 'SWIPE', 'OVERLAY', 'CHANGE MAP'] as const).map((mode) => {
+            const isActive = viewMode === mode;
+            return (
+              <button
+                key={mode}
+                onClick={() => setViewMode(mode)}
+                style={{
+                  background: isActive ? 'var(--accent-amber)' : 'transparent',
+                  color: isActive ? '#07090e' : 'var(--text-dim)',
+                  border: '1px solid ' + (isActive ? 'var(--accent-amber)' : 'var(--border-dim)'),
+                  padding: '3px 8px',
+                  fontSize: '0.65rem',
+                  fontFamily: 'var(--font-mono)',
+                  fontWeight: isActive ? 700 : 500,
+                  cursor: 'pointer',
+                  transition: 'all 0.15s ease'
+                }}
+              >
+                {mode}
+              </button>
+            );
+          })}
         </div>
       </div>
 
@@ -184,8 +164,8 @@ export const TemporalAnalysis: React.FC<TemporalAnalysisProps> = ({ dataset, onS
                   {dataset.afterYear} SATELLITE OBSERVATION (COMPARISON)
                 </div>
 
-                {/* Overlaid Detected Change Regions */}
-                {showOverlays && changeRegions.map((region) => {
+                {/* Overlaid Detected Change Regions (Only when a category is clicked) */}
+                {changeRegions.map((region) => {
                   const isHov = isHoveringObject === region.id;
                   const borderCol = region.category === 'structure' ? '#ff9900' : (region.category === 'vegetation' ? '#10b981' : '#f43f5e');
                   const emoji = region.category === 'structure' ? '🏢' : (region.category === 'vegetation' ? '🌳' : '🛣️');
@@ -201,35 +181,59 @@ export const TemporalAnalysis: React.FC<TemporalAnalysisProps> = ({ dataset, onS
                         position: 'absolute',
                         left: `${region.x}%`,
                         top: `${region.y}%`,
-                        width: `${Math.max(4, region.width)}%`,
-                        height: `${Math.max(4, region.height)}%`,
-                        border: `2px solid ${borderCol}`,
-                        backgroundColor: isHov ? 'rgba(255, 153, 0, 0.35)' : 'rgba(255, 153, 0, 0.1)',
+                        width: `${Math.max(5, region.width)}%`,
+                        height: `${Math.max(5, region.height)}%`,
+                        border: `1.5px solid ${borderCol}`,
+                        backgroundColor: isHov ? 'rgba(255, 153, 0, 0.35)' : 'rgba(255, 153, 0, 0.08)',
                         cursor: 'pointer',
                         zIndex: 20,
                         transition: 'all 0.15s ease',
-                        boxShadow: isHov ? `0 0 14px ${borderCol}` : `0 0 4px ${borderCol}`
+                        boxShadow: isHov ? `0 0 14px ${borderCol}` : `0 0 5px ${borderCol}`,
+                        borderRadius: '2px'
                       }}
                     >
+                      {/* Discrete Emoji Pin */}
                       <div style={{
                         position: 'absolute',
-                        bottom: '100%',
-                        left: 0,
-                        background: 'rgba(0, 0, 0, 0.92)',
-                        border: `1px solid ${borderCol}`,
-                        color: borderCol,
-                        fontSize: '0.58rem',
-                        fontFamily: 'var(--font-mono)',
-                        padding: '1px 5px',
-                        whiteSpace: 'nowrap',
-                        fontWeight: 'bold',
+                        top: '-10px',
+                        left: '-10px',
+                        width: '22px',
+                        height: '22px',
+                        borderRadius: '50%',
+                        background: '#07090e',
+                        border: `1.5px solid ${borderCol}`,
                         display: 'flex',
                         alignItems: 'center',
-                        gap: '3px'
+                        justifyContent: 'center',
+                        fontSize: '11px',
+                        boxShadow: `0 0 8px ${borderCol}`,
+                        zIndex: 22
                       }}>
-                        <span>{emoji}</span>
-                        <span>{region.type} ({region.areaSqMeters} m²)</span>
+                        {emoji}
                       </div>
+
+                      {/* Tooltip on Hover Only */}
+                      {isHov && (
+                        <div style={{
+                          position: 'absolute',
+                          bottom: '100%',
+                          left: '50%',
+                          transform: 'translateX(-50%)',
+                          marginBottom: '6px',
+                          background: 'rgba(7, 9, 14, 0.95)',
+                          border: `1px solid ${borderCol}`,
+                          color: '#fff',
+                          fontSize: '0.62rem',
+                          fontFamily: 'var(--font-mono)',
+                          padding: '3px 8px',
+                          whiteSpace: 'nowrap',
+                          fontWeight: 'bold',
+                          zIndex: 30,
+                          boxShadow: '0 4px 12px rgba(0,0,0,0.8)'
+                        }}>
+                          {region.name} • {region.areaSqMeters.toLocaleString()} m² [Click to inspect]
+                        </div>
+                      )}
                     </div>
                   );
                 })}
@@ -240,7 +244,6 @@ export const TemporalAnalysis: React.FC<TemporalAnalysisProps> = ({ dataset, onS
           {/* MODE 2: SWIPE */}
           {viewMode === 'SWIPE' && (
             <div style={{ position: 'relative', width: '100%', height: '100%' }}>
-              {/* Underneath: After */}
               <img
                 src={dataset.afterImage}
                 alt="Observation"
@@ -251,7 +254,7 @@ export const TemporalAnalysis: React.FC<TemporalAnalysisProps> = ({ dataset, onS
               </div>
 
               {/* Overlaid Detected Regions on Swipe */}
-              {showOverlays && changeRegions.map((region) => {
+              {changeRegions.map((region) => {
                 const borderCol = region.category === 'structure' ? '#ff9900' : (region.category === 'vegetation' ? '#10b981' : '#f43f5e');
                 return (
                   <div
@@ -353,7 +356,7 @@ export const TemporalAnalysis: React.FC<TemporalAnalysisProps> = ({ dataset, onS
             </div>
           )}
 
-          {/* MODE 4: CHANGE MAP (Calculated Differential Mask Overlay) */}
+          {/* MODE 4: CHANGE MAP */}
           {viewMode === 'CHANGE MAP' && (
             <div style={{ position: 'relative', width: '100%', height: '100%' }}>
               <img
@@ -379,7 +382,7 @@ export const TemporalAnalysis: React.FC<TemporalAnalysisProps> = ({ dataset, onS
                 />
               )}
 
-              {showOverlays && changeRegions.map((region) => {
+              {changeRegions.map((region) => {
                 const isHov = isHoveringObject === region.id;
                 const borderCol = region.category === 'structure' ? '#ff9900' : (region.category === 'vegetation' ? '#10b981' : '#f43f5e');
                 return (
@@ -400,22 +403,7 @@ export const TemporalAnalysis: React.FC<TemporalAnalysisProps> = ({ dataset, onS
                       zIndex: 20,
                       transition: 'all 0.15s ease'
                     }}
-                  >
-                    <div style={{
-                      position: 'absolute',
-                      bottom: '100%',
-                      left: 0,
-                      background: 'rgba(0, 0, 0, 0.9)',
-                      border: `1px solid ${borderCol}`,
-                      color: borderCol,
-                      fontSize: '0.58rem',
-                      fontFamily: 'var(--font-mono)',
-                      padding: '1px 4px',
-                      whiteSpace: 'nowrap'
-                    }}>
-                      {region.type} ({region.areaSqMeters} m²)
-                    </div>
-                  </div>
+                  />
                 );
               })}
 
@@ -437,7 +425,7 @@ export const TemporalAnalysis: React.FC<TemporalAnalysisProps> = ({ dataset, onS
           )}
         </div>
 
-        {/* Interactive Legend Strip with Category Filter buttons */}
+        {/* Interactive Legend: Click to Toggle Overlays */}
         <div style={{
           display: 'flex',
           justifyContent: 'space-between',
@@ -450,86 +438,102 @@ export const TemporalAnalysis: React.FC<TemporalAnalysisProps> = ({ dataset, onS
           flexWrap: 'wrap',
           gap: '8px'
         }}>
-          <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center' }}>
+            
+            {/* 1. Structural Change */}
             <button
-              onClick={() => setActiveCategoryFilter('all')}
+              onClick={() => setActiveCategoryFilter(activeCategoryFilter === 'structure' ? null : 'structure')}
               style={{
-                background: activeCategoryFilter === 'all' ? 'rgba(255, 255, 255, 0.15)' : 'transparent',
-                color: activeCategoryFilter === 'all' ? '#fff' : 'var(--text-dim)',
-                border: `1px solid ${activeCategoryFilter === 'all' ? '#fff' : 'transparent'}`,
-                padding: '2px 6px',
+                background: activeCategoryFilter === 'structure' ? 'rgba(255, 153, 0, 0.25)' : 'transparent',
+                color: activeCategoryFilter === 'structure' ? '#ff9900' : '#94a3b8',
+                border: `1px solid ${activeCategoryFilter === 'structure' ? '#ff9900' : 'var(--border-dim)'}`,
+                padding: '4px 10px',
                 cursor: 'pointer',
                 fontFamily: 'var(--font-mono)',
-                fontSize: '0.65rem',
-                borderRadius: '2px'
-              }}
-            >
-              ALL ({rawRegions.length})
-            </button>
-
-            <button
-              onClick={() => setActiveCategoryFilter(activeCategoryFilter === 'structure' ? 'all' : 'structure')}
-              style={{
-                background: activeCategoryFilter === 'structure' ? 'rgba(255, 153, 0, 0.2)' : 'transparent',
-                color: activeCategoryFilter === 'structure' ? '#ff9900' : '#cbd5e1',
-                border: `1px solid ${activeCategoryFilter === 'structure' ? '#ff9900' : 'rgba(255, 153, 0, 0.3)'}`,
-                padding: '2px 8px',
-                cursor: 'pointer',
-                fontFamily: 'var(--font-mono)',
-                fontSize: '0.65rem',
+                fontSize: '0.68rem',
+                fontWeight: activeCategoryFilter === 'structure' ? 800 : 500,
                 display: 'flex',
                 alignItems: 'center',
-                gap: '5px',
-                borderRadius: '2px'
+                gap: '6px',
+                borderRadius: '2px',
+                transition: 'all 0.15s ease'
               }}
             >
-              <span style={{ width: '8px', height: '8px', backgroundColor: '#ff9900' }} />
+              <span style={{ width: '8px', height: '8px', backgroundColor: '#ff9900', display: 'inline-block' }} />
               <span>🏢 Potential Structural Change ({rawRegions.filter(r => r.category === 'structure').length})</span>
             </button>
 
+            {/* 2. Vegetation Change */}
             <button
-              onClick={() => setActiveCategoryFilter(activeCategoryFilter === 'vegetation' ? 'all' : 'vegetation')}
+              onClick={() => setActiveCategoryFilter(activeCategoryFilter === 'vegetation' ? null : 'vegetation')}
               style={{
-                background: activeCategoryFilter === 'vegetation' ? 'rgba(16, 185, 129, 0.2)' : 'transparent',
-                color: activeCategoryFilter === 'vegetation' ? '#10b981' : '#cbd5e1',
-                border: `1px solid ${activeCategoryFilter === 'vegetation' ? '#10b981' : 'rgba(16, 185, 129, 0.3)'}`,
-                padding: '2px 8px',
+                background: activeCategoryFilter === 'vegetation' ? 'rgba(16, 185, 129, 0.25)' : 'transparent',
+                color: activeCategoryFilter === 'vegetation' ? '#10b981' : '#94a3b8',
+                border: `1px solid ${activeCategoryFilter === 'vegetation' ? '#10b981' : 'var(--border-dim)'}`,
+                padding: '4px 10px',
                 cursor: 'pointer',
                 fontFamily: 'var(--font-mono)',
-                fontSize: '0.65rem',
+                fontSize: '0.68rem',
+                fontWeight: activeCategoryFilter === 'vegetation' ? 800 : 500,
                 display: 'flex',
                 alignItems: 'center',
-                gap: '5px',
-                borderRadius: '2px'
+                gap: '6px',
+                borderRadius: '2px',
+                transition: 'all 0.15s ease'
               }}
             >
-              <span style={{ width: '8px', height: '8px', backgroundColor: '#10b981' }} />
+              <span style={{ width: '8px', height: '8px', backgroundColor: '#10b981', display: 'inline-block' }} />
               <span>🌳 Potential Vegetation Change ({rawRegions.filter(r => r.category === 'vegetation').length})</span>
             </button>
 
+            {/* 3. Surface Shift */}
             <button
-              onClick={() => setActiveCategoryFilter(activeCategoryFilter === 'high_intensity' ? 'all' : 'high_intensity')}
+              onClick={() => setActiveCategoryFilter(activeCategoryFilter === 'high_intensity' ? null : 'high_intensity')}
               style={{
-                background: activeCategoryFilter === 'high_intensity' ? 'rgba(244, 63, 94, 0.2)' : 'transparent',
-                color: activeCategoryFilter === 'high_intensity' ? '#f43f5e' : '#cbd5e1',
-                border: `1px solid ${activeCategoryFilter === 'high_intensity' ? '#f43f5e' : 'rgba(244, 63, 94, 0.3)'}`,
-                padding: '2px 8px',
+                background: activeCategoryFilter === 'high_intensity' ? 'rgba(244, 63, 94, 0.25)' : 'transparent',
+                color: activeCategoryFilter === 'high_intensity' ? '#f43f5e' : '#94a3b8',
+                border: `1px solid ${activeCategoryFilter === 'high_intensity' ? '#f43f5e' : 'var(--border-dim)'}`,
+                padding: '4px 10px',
                 cursor: 'pointer',
                 fontFamily: 'var(--font-mono)',
-                fontSize: '0.65rem',
+                fontSize: '0.68rem',
+                fontWeight: activeCategoryFilter === 'high_intensity' ? 800 : 500,
                 display: 'flex',
                 alignItems: 'center',
-                gap: '5px',
-                borderRadius: '2px'
+                gap: '6px',
+                borderRadius: '2px',
+                transition: 'all 0.15s ease'
               }}
             >
-              <span style={{ width: '8px', height: '8px', backgroundColor: '#f43f5e' }} />
+              <span style={{ width: '8px', height: '8px', backgroundColor: '#f43f5e', display: 'inline-block' }} />
               <span>🛣️ High-Intensity Surface Shift ({rawRegions.filter(r => r.category === 'high_intensity').length})</span>
             </button>
+
+            {/* Clear button if any is active */}
+            {activeCategoryFilter && (
+              <button
+                onClick={() => setActiveCategoryFilter(null)}
+                style={{
+                  background: 'rgba(255, 255, 255, 0.08)',
+                  color: '#fff',
+                  border: '1px solid var(--border-dim)',
+                  padding: '4px 8px',
+                  cursor: 'pointer',
+                  fontFamily: 'var(--font-mono)',
+                  fontSize: '0.62rem',
+                  borderRadius: '2px'
+                }}
+              >
+                ✕ HIDE OVERLAYS
+              </button>
+            )}
+
           </div>
 
-          <div style={{ color: '#00f0ff', fontSize: '0.62rem', display: 'flex', alignItems: 'center', gap: '4px' }}>
-            <span>⚡ Click any region overlay to inspect telemetry</span>
+          <div style={{ color: activeCategoryFilter ? '#00f0ff' : 'var(--text-dim)', fontSize: '0.62rem' }}>
+            {activeCategoryFilter
+              ? '⚡ Click any detected box to inspect telemetry'
+              : '👈 Click a category button to display change overlays'}
           </div>
         </div>
 
