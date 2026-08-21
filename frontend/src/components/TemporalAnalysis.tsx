@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { Upload, ImagePlus, Play, Loader2 } from 'lucide-react';
+import { Upload, Play, Loader2 } from 'lucide-react';
 import type { PresetDataset, CalculatedChangeRegion } from '../types';
 import { decodeUploadedFile } from '../utils/fileDecoder';
 
@@ -154,148 +154,51 @@ export const TemporalAnalysis: React.FC<TemporalAnalysisProps> = ({
                 </button>
               );
             })}
+
+            {onTriggerAnalysis && !dataset.analysisResult && (
+              <button
+                onClick={() => onTriggerAnalysis(dataset)}
+                disabled={isAnalyzing}
+                style={{
+                  background: '#00f0ff',
+                  color: '#040711',
+                  border: 'none',
+                  padding: '3px 10px',
+                  fontSize: '0.65rem',
+                  fontFamily: 'var(--font-mono)',
+                  fontWeight: 900,
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '5px',
+                  borderRadius: '2px',
+                  boxShadow: '0 0 10px rgba(0, 240, 255, 0.35)',
+                  marginLeft: '4px'
+                }}
+              >
+                {isAnalyzing ? <Loader2 size={12} className="spin" /> : <Play size={12} fill="#040711" />}
+                <span>ANALYZE PHOTOS</span>
+              </button>
+            )}
           </div>
         )}
       </div>
 
-      {/* DIRECT SATELLITE PHOTO INGESTION BAR */}
-      <div style={{
-        background: 'rgba(6, 10, 20, 0.95)',
-        borderBottom: '1px solid var(--border-dim)',
-        padding: '10px 14px',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        flexWrap: 'wrap',
-        gap: '10px'
-      }}>
-        
-        {/* Upload Action Buttons */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
-          <div style={{ fontSize: '0.68rem', fontFamily: 'var(--font-mono)', color: 'var(--accent-amber)', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '6px' }}>
-            <Upload size={13} />
-            <span>INGEST SATELLITE PHOTOS:</span>
-          </div>
-
-          {/* Hidden Native File Inputs */}
-          <input 
-            type="file" 
-            ref={beforeInputRef} 
-            onChange={handleUploadBefore} 
-            accept=".png,.jpg,.jpeg,.tif,.tiff,.jp2,.webp,.zip" 
-            style={{ display: 'none' }} 
-          />
-          <input 
-            type="file" 
-            ref={afterInputRef} 
-            onChange={handleUploadAfter} 
-            accept=".png,.jpg,.jpeg,.tif,.tiff,.jp2,.webp,.zip" 
-            style={{ display: 'none' }} 
-          />
-
-          {/* Upload Before (T0) */}
-          <button
-            onClick={() => beforeInputRef.current?.click()}
-            disabled={isUploading}
-            style={{
-              background: dataset.beforeImage ? 'rgba(0, 240, 255, 0.15)' : 'rgba(255, 255, 255, 0.06)',
-              border: `1px solid ${dataset.beforeImage ? '#00f0ff' : 'var(--border-dim)'}`,
-              color: dataset.beforeImage ? '#00f0ff' : '#cbd5e1',
-              padding: '5px 10px',
-              fontSize: '0.68rem',
-              fontFamily: 'var(--font-mono)',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '6px',
-              borderRadius: '2px'
-            }}
-          >
-            <ImagePlus size={13} />
-            <span>{dataset.beforeImage ? '✓ T0 Photo Ingested' : '📁 Upload Before Photo (T0)'}</span>
-          </button>
-
-          {/* Upload After (T1) */}
-          <button
-            onClick={() => afterInputRef.current?.click()}
-            disabled={isUploading}
-            style={{
-              background: dataset.afterImage ? 'rgba(255, 153, 0, 0.15)' : 'rgba(255, 255, 255, 0.06)',
-              border: `1px solid ${dataset.afterImage ? 'var(--accent-amber)' : 'var(--border-dim)'}`,
-              color: dataset.afterImage ? 'var(--accent-amber)' : '#cbd5e1',
-              padding: '5px 10px',
-              fontSize: '0.68rem',
-              fontFamily: 'var(--font-mono)',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '6px',
-              borderRadius: '2px'
-            }}
-          >
-            <ImagePlus size={13} />
-            <span>{dataset.afterImage ? '✓ T1 Photo Ingested' : '📁 Upload After Photo (T1)'}</span>
-          </button>
-        </div>
-
-        {/* Action button if both present */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          {!hasBothImages && (
-            <button
-              onClick={handleLoadSampleDataset}
-              style={{
-                background: 'rgba(255, 255, 255, 0.06)',
-                color: '#94a3b8',
-                border: '1px solid var(--border-dim)',
-                padding: '5px 10px',
-                fontSize: '0.65rem',
-                fontFamily: 'var(--font-mono)',
-                cursor: 'pointer',
-                borderRadius: '2px'
-              }}
-            >
-              ⚡ Load Sample Observation Pair
-            </button>
-          )}
-
-          {hasBothImages && onTriggerAnalysis && (
-            <button
-              onClick={() => onTriggerAnalysis(dataset)}
-              disabled={isAnalyzing || isUploading}
-              style={{
-                background: '#00f0ff',
-                color: '#040711',
-                border: 'none',
-                padding: '6px 14px',
-                fontSize: '0.72rem',
-                fontFamily: 'var(--font-mono)',
-                fontWeight: 900,
-                letterSpacing: '0.06em',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '6px',
-                borderRadius: '2px',
-                boxShadow: '0 0 12px rgba(0, 240, 255, 0.35)',
-                transition: 'all 0.15s ease'
-              }}
-            >
-              {isAnalyzing ? (
-                <>
-                  <Loader2 size={13} className="spin" />
-                  <span>ANALYZING PIXELS...</span>
-                </>
-              ) : (
-                <>
-                  <Play size={13} fill="#040711" />
-                  <span>ANALYZE PHOTOS</span>
-                </>
-              )}
-            </button>
-          )}
-        </div>
-
-      </div>
+      {/* Hidden Native File Inputs for Dropzones */}
+      <input 
+        type="file" 
+        ref={beforeInputRef} 
+        onChange={handleUploadBefore} 
+        accept=".png,.jpg,.jpeg,.tif,.tiff,.jp2,.webp,.zip" 
+        style={{ display: 'none' }} 
+      />
+      <input 
+        type="file" 
+        ref={afterInputRef} 
+        onChange={handleUploadAfter} 
+        accept=".png,.jpg,.jpeg,.tif,.tiff,.jp2,.webp,.zip" 
+        style={{ display: 'none' }} 
+      />
 
       {/* Main Image Comparison Area */}
       <div style={{ padding: '12px', flex: 1, display: 'flex', flexDirection: 'column', gap: '8px' }}>
@@ -382,7 +285,12 @@ export const TemporalAnalysis: React.FC<TemporalAnalysisProps> = ({
                   transition: 'all 0.2s ease'
                 }}
               >
-                {dataset.beforeImage ? (
+                {isUploading ? (
+                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
+                    <Loader2 size={24} className="spin" color="#00f0ff" />
+                    <span style={{ fontSize: '0.72rem', fontFamily: 'var(--font-mono)', color: '#00f0ff' }}>Decoding & Ingesting Satellite Photo...</span>
+                  </div>
+                ) : dataset.beforeImage ? (
                   <>
                     <img src={dataset.beforeImage} alt="Before Preview" style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', objectFit: 'cover', opacity: 0.75 }} />
                     <div style={{ position: 'relative', zIndex: 2, background: 'rgba(4, 7, 16, 0.9)', padding: '6px 12px', borderRadius: '3px', border: '1px solid #00f0ff', fontFamily: 'var(--font-mono)', fontSize: '0.72rem', color: '#00f0ff', fontWeight: 'bold' }}>
@@ -437,7 +345,12 @@ export const TemporalAnalysis: React.FC<TemporalAnalysisProps> = ({
                   transition: 'all 0.2s ease'
                 }}
               >
-                {dataset.afterImage ? (
+                {isUploading ? (
+                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
+                    <Loader2 size={24} className="spin" color="var(--accent-amber)" />
+                    <span style={{ fontSize: '0.72rem', fontFamily: 'var(--font-mono)', color: 'var(--accent-amber)' }}>Decoding & Ingesting Satellite Photo...</span>
+                  </div>
+                ) : dataset.afterImage ? (
                   <>
                     <img src={dataset.afterImage} alt="After Preview" style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', objectFit: 'cover', opacity: 0.75 }} />
                     <div style={{ position: 'relative', zIndex: 2, background: 'rgba(4, 7, 16, 0.9)', padding: '6px 12px', borderRadius: '3px', border: '1px solid var(--accent-amber)', fontFamily: 'var(--font-mono)', fontSize: '0.72rem', color: 'var(--accent-amber)', fontWeight: 'bold' }}>
@@ -462,6 +375,26 @@ export const TemporalAnalysis: React.FC<TemporalAnalysisProps> = ({
                     </div>
                   </>
                 )}
+              </div>
+
+              {/* Quick sample option */}
+              <div style={{ gridColumn: '1 / -1', display: 'flex', justifyContent: 'center', marginTop: '6px' }}>
+                <button
+                  onClick={handleLoadSampleDataset}
+                  style={{
+                    background: 'transparent',
+                    color: 'var(--text-dim)',
+                    border: '1px dashed var(--border-dim)',
+                    padding: '5px 12px',
+                    fontSize: '0.66rem',
+                    fontFamily: 'var(--font-mono)',
+                    cursor: 'pointer',
+                    borderRadius: '2px',
+                    transition: 'all 0.15s ease'
+                  }}
+                >
+                  ⚡ Or Load Sample Observation Pair (Bengaluru Sentinel-2)
+                </button>
               </div>
 
             </div>
