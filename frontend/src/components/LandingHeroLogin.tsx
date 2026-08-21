@@ -255,28 +255,6 @@ export const LandingHeroLogin: React.FC<LandingHeroLoginProps> = ({ onLoginSucce
 
         </div>
 
-        {/* Telemetry Footer Info */}
-        <div style={{
-          display: 'flex',
-          gap: '24px',
-          marginTop: '16px',
-          fontFamily: 'var(--font-mono)',
-          fontSize: '0.74rem'
-        }}>
-          <div style={{ borderLeft: '1px solid rgba(0, 240, 255, 0.3)', paddingLeft: '10px' }}>
-            <div style={{ color: 'var(--text-dim)', fontSize: '0.62rem' }}>SENTINEL-2B GSD</div>
-            <div style={{ color: '#00f0ff', fontWeight: 800 }}>10.0m Multi-Spectral</div>
-          </div>
-          <div style={{ borderLeft: '1px solid rgba(255, 153, 0, 0.3)', paddingLeft: '10px' }}>
-            <div style={{ color: 'var(--text-dim)', fontSize: '0.62rem' }}>AI ENGINE</div>
-            <div style={{ color: 'var(--accent-amber)', fontWeight: 800 }}>Groq Llama 3.3 70B</div>
-          </div>
-          <div style={{ borderLeft: '1px solid rgba(16, 185, 129, 0.3)', paddingLeft: '10px' }}>
-            <div style={{ color: 'var(--text-dim)', fontSize: '0.62rem' }}>SPATIAL ENGINE</div>
-            <div style={{ color: '#10b981', fontWeight: 800 }}>PostGIS + GDAL</div>
-          </div>
-        </div>
-
       </div>
 
       {/* SLEEK BLENDED LOGIN MODAL (Appears on clicking Start Analysis) */}
