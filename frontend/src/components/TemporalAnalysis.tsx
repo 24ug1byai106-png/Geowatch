@@ -10,6 +10,8 @@ export const TemporalAnalysis: React.FC<TemporalAnalysisProps> = ({ dataset, onS
   const [viewMode, setViewMode] = useState<'SPLIT VIEW' | 'SWIPE' | 'OVERLAY' | 'CHANGE MAP'>('SPLIT VIEW');
   const [swipePos, setSwipePos] = useState<number>(50);
   const [overlayOpacity, setOverlayOpacity] = useState<number>(50);
+  const [showOverlays, setShowOverlays] = useState<boolean>(true);
+  const [activeCategoryFilter, setActiveCategoryFilter] = useState<'all' | 'structure' | 'vegetation' | 'high_intensity'>('all');
   const [isHoveringObject, setIsHoveringObject] = useState<string | null>(null);
 
   const containerRef = useRef<HTMLDivElement>(null);
@@ -24,7 +26,10 @@ export const TemporalAnalysis: React.FC<TemporalAnalysisProps> = ({ dataset, onS
   };
 
   const analysis = dataset.analysisResult;
-  const changeRegions = analysis?.regions || [];
+  const rawRegions = analysis?.regions || [];
+  const changeRegions = rawRegions.filter(r => 
+    activeCategoryFilter === 'all' || r.category === activeCategoryFilter
+  );
 
   return (
     <div className="hud-panel" style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
@@ -36,30 +41,51 @@ export const TemporalAnalysis: React.FC<TemporalAnalysisProps> = ({ dataset, onS
           <span>TEMPORAL CHANGE ANALYSIS // {dataset.beforeYear} VS {dataset.afterYear}</span>
         </div>
 
-        {/* View Mode Switcher */}
-        <div style={{ display: 'flex', gap: '4px' }}>
-          {(['SPLIT VIEW', 'SWIPE', 'OVERLAY', 'CHANGE MAP'] as const).map((mode) => {
-            const isActive = viewMode === mode;
-            return (
-              <button
-                key={mode}
-                onClick={() => setViewMode(mode)}
-                style={{
-                  background: isActive ? 'var(--accent-amber)' : 'transparent',
-                  color: isActive ? '#07090e' : 'var(--text-dim)',
-                  border: '1px solid ' + (isActive ? 'var(--accent-amber)' : 'var(--border-dim)'),
-                  padding: '3px 8px',
-                  fontSize: '0.65rem',
-                  fontFamily: 'var(--font-mono)',
-                  fontWeight: isActive ? 700 : 500,
-                  cursor: 'pointer',
-                  transition: 'all 0.15s ease'
-                }}
-              >
-                {mode}
-              </button>
-            );
-          })}
+        {/* View Mode Switcher + Overlays Toggle */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+          
+          <button
+            onClick={() => setShowOverlays(!showOverlays)}
+            style={{
+              background: showOverlays ? 'rgba(0, 240, 255, 0.15)' : 'rgba(255, 255, 255, 0.05)',
+              color: showOverlays ? '#00f0ff' : 'var(--text-dim)',
+              border: `1px solid ${showOverlays ? '#00f0ff' : 'var(--border-dim)'}`,
+              padding: '3px 8px',
+              fontSize: '0.65rem',
+              fontFamily: 'var(--font-mono)',
+              fontWeight: 700,
+              cursor: 'pointer',
+              borderRadius: '2px',
+              transition: 'all 0.15s ease'
+            }}
+          >
+            OVERLAYS: {showOverlays ? '● ON' : '○ OFF'}
+          </button>
+
+          <div style={{ display: 'flex', gap: '4px' }}>
+            {(['SPLIT VIEW', 'SWIPE', 'OVERLAY', 'CHANGE MAP'] as const).map((mode) => {
+              const isActive = viewMode === mode;
+              return (
+                <button
+                  key={mode}
+                  onClick={() => setViewMode(mode)}
+                  style={{
+                    background: isActive ? 'var(--accent-amber)' : 'transparent',
+                    color: isActive ? '#07090e' : 'var(--text-dim)',
+                    border: '1px solid ' + (isActive ? 'var(--accent-amber)' : 'var(--border-dim)'),
+                    padding: '3px 8px',
+                    fontSize: '0.65rem',
+                    fontFamily: 'var(--font-mono)',
+                    fontWeight: isActive ? 700 : 500,
+                    cursor: 'pointer',
+                    transition: 'all 0.15s ease'
+                  }}
+                >
+                  {mode}
+                </button>
+              );
+            })}
+          </div>
         </div>
       </div>
 
@@ -78,7 +104,7 @@ export const TemporalAnalysis: React.FC<TemporalAnalysisProps> = ({ dataset, onS
             fontSize: '0.7rem',
             fontFamily: 'var(--font-mono)'
           }}>
-            <span style={{ color: 'var(--text-dim)' }}>2024 BASELINE</span>
+            <span style={{ color: 'var(--text-dim)' }}>{dataset.beforeYear} BASELINE</span>
             <input
               type="range"
               min="0"
@@ -111,11 +137,11 @@ export const TemporalAnalysis: React.FC<TemporalAnalysisProps> = ({ dataset, onS
           {/* MODE 1: SPLIT VIEW */}
           {viewMode === 'SPLIT VIEW' && (
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', height: '100%', gap: '2px', background: 'var(--border-dim)' }}>
-              {/* Left: 2024 Baseline */}
+              {/* Left: Baseline */}
               <div style={{ position: 'relative', height: '100%', overflow: 'hidden' }}>
                 <img
                   src={dataset.beforeImage}
-                  alt="2024 Baseline Satellite Observation"
+                  alt="Baseline Satellite Observation"
                   style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                 />
                 <div style={{
@@ -128,17 +154,18 @@ export const TemporalAnalysis: React.FC<TemporalAnalysisProps> = ({ dataset, onS
                   fontFamily: 'var(--font-mono)',
                   fontSize: '0.65rem',
                   color: '#60a5fa',
-                  fontWeight: 'bold'
+                  fontWeight: 'bold',
+                  zIndex: 10
                 }}>
                   {dataset.beforeYear} SATELLITE OBSERVATION (BASELINE)
                 </div>
               </div>
 
-              {/* Right: 2025 Comparison */}
+              {/* Right: Comparison with Interactive Overlays */}
               <div style={{ position: 'relative', height: '100%', overflow: 'hidden' }}>
                 <img
                   src={dataset.afterImage}
-                  alt="2025 Comparison Satellite Observation"
+                  alt="Comparison Satellite Observation"
                   style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                 />
                 <div style={{
@@ -151,10 +178,61 @@ export const TemporalAnalysis: React.FC<TemporalAnalysisProps> = ({ dataset, onS
                   fontFamily: 'var(--font-mono)',
                   fontSize: '0.65rem',
                   color: 'var(--accent-amber)',
-                  fontWeight: 'bold'
+                  fontWeight: 'bold',
+                  zIndex: 10
                 }}>
                   {dataset.afterYear} SATELLITE OBSERVATION (COMPARISON)
                 </div>
+
+                {/* Overlaid Detected Change Regions */}
+                {showOverlays && changeRegions.map((region) => {
+                  const isHov = isHoveringObject === region.id;
+                  const borderCol = region.category === 'structure' ? '#ff9900' : (region.category === 'vegetation' ? '#10b981' : '#f43f5e');
+                  const emoji = region.category === 'structure' ? '🏢' : (region.category === 'vegetation' ? '🌳' : '🛣️');
+
+                  return (
+                    <div
+                      key={region.id}
+                      onClick={() => onSelectObject(region)}
+                      onMouseEnter={() => setIsHoveringObject(region.id)}
+                      onMouseLeave={() => setIsHoveringObject(null)}
+                      title={`Click to inspect ${region.name} (${region.areaSqMeters} m²)`}
+                      style={{
+                        position: 'absolute',
+                        left: `${region.x}%`,
+                        top: `${region.y}%`,
+                        width: `${Math.max(4, region.width)}%`,
+                        height: `${Math.max(4, region.height)}%`,
+                        border: `2px solid ${borderCol}`,
+                        backgroundColor: isHov ? 'rgba(255, 153, 0, 0.35)' : 'rgba(255, 153, 0, 0.1)',
+                        cursor: 'pointer',
+                        zIndex: 20,
+                        transition: 'all 0.15s ease',
+                        boxShadow: isHov ? `0 0 14px ${borderCol}` : `0 0 4px ${borderCol}`
+                      }}
+                    >
+                      <div style={{
+                        position: 'absolute',
+                        bottom: '100%',
+                        left: 0,
+                        background: 'rgba(0, 0, 0, 0.92)',
+                        border: `1px solid ${borderCol}`,
+                        color: borderCol,
+                        fontSize: '0.58rem',
+                        fontFamily: 'var(--font-mono)',
+                        padding: '1px 5px',
+                        whiteSpace: 'nowrap',
+                        fontWeight: 'bold',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '3px'
+                      }}>
+                        <span>{emoji}</span>
+                        <span>{region.type} ({region.areaSqMeters} m²)</span>
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
             </div>
           )}
@@ -162,17 +240,39 @@ export const TemporalAnalysis: React.FC<TemporalAnalysisProps> = ({ dataset, onS
           {/* MODE 2: SWIPE */}
           {viewMode === 'SWIPE' && (
             <div style={{ position: 'relative', width: '100%', height: '100%' }}>
-              {/* Underneath: 2025 */}
+              {/* Underneath: After */}
               <img
                 src={dataset.afterImage}
-                alt="2025 Observation"
+                alt="Observation"
                 style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', objectFit: 'cover' }}
               />
               <div style={{ position: 'absolute', top: '8px', right: '8px', background: 'rgba(0, 0, 0, 0.85)', border: '1px solid var(--accent-amber)', padding: '3px 8px', fontFamily: 'var(--font-mono)', fontSize: '0.65rem', color: 'var(--accent-amber)', fontWeight: 'bold', zIndex: 5 }}>
                 {dataset.afterYear} AFTER
               </div>
 
-              {/* Clipped Top: 2024 */}
+              {/* Overlaid Detected Regions on Swipe */}
+              {showOverlays && changeRegions.map((region) => {
+                const borderCol = region.category === 'structure' ? '#ff9900' : (region.category === 'vegetation' ? '#10b981' : '#f43f5e');
+                return (
+                  <div
+                    key={region.id}
+                    onClick={() => onSelectObject(region)}
+                    style={{
+                      position: 'absolute',
+                      left: `${region.x}%`,
+                      top: `${region.y}%`,
+                      width: `${region.width}%`,
+                      height: `${region.height}%`,
+                      border: `1.5px solid ${borderCol}`,
+                      backgroundColor: 'rgba(255, 153, 0, 0.15)',
+                      cursor: 'pointer',
+                      zIndex: 8
+                    }}
+                  />
+                );
+              })}
+
+              {/* Clipped Top: Baseline */}
               <div style={{
                 position: 'absolute',
                 top: 0,
@@ -184,7 +284,7 @@ export const TemporalAnalysis: React.FC<TemporalAnalysisProps> = ({ dataset, onS
               }}>
                 <img
                   src={dataset.beforeImage}
-                  alt="2024 Observation"
+                  alt="Baseline Observation"
                   style={{
                     width: containerRef.current ? containerRef.current.clientWidth : '100%',
                     height: '100%',
@@ -234,12 +334,12 @@ export const TemporalAnalysis: React.FC<TemporalAnalysisProps> = ({ dataset, onS
             <div style={{ position: 'relative', width: '100%', height: '100%' }}>
               <img
                 src={dataset.beforeImage}
-                alt="2024 Baseline"
+                alt="Baseline"
                 style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', objectFit: 'cover' }}
               />
               <img
                 src={dataset.afterImage}
-                alt="2025 Overlay"
+                alt="Overlay"
                 style={{
                   position: 'absolute',
                   top: 0,
@@ -253,17 +353,15 @@ export const TemporalAnalysis: React.FC<TemporalAnalysisProps> = ({ dataset, onS
             </div>
           )}
 
-          {/* MODE 4: CHANGE MAP (Real Calculated Differential Mask Overlay) */}
+          {/* MODE 4: CHANGE MAP (Calculated Differential Mask Overlay) */}
           {viewMode === 'CHANGE MAP' && (
             <div style={{ position: 'relative', width: '100%', height: '100%' }}>
-              {/* Baseline background image */}
               <img
                 src={dataset.afterImage}
-                alt="2025 Background"
+                alt="Background"
                 style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', objectFit: 'cover', filter: 'brightness(0.65)' }}
               />
 
-              {/* Real Computed Differential Mask */}
               {analysis?.changeMaskDataUrl && (
                 <img
                   src={analysis.changeMaskDataUrl}
@@ -281,9 +379,9 @@ export const TemporalAnalysis: React.FC<TemporalAnalysisProps> = ({ dataset, onS
                 />
               )}
 
-              {/* Detected Change Region Bounding Boxes */}
-              {changeRegions.map((region) => {
+              {showOverlays && changeRegions.map((region) => {
                 const isHov = isHoveringObject === region.id;
+                const borderCol = region.category === 'structure' ? '#ff9900' : (region.category === 'vegetation' ? '#10b981' : '#f43f5e');
                 return (
                   <div
                     key={region.id}
@@ -296,7 +394,7 @@ export const TemporalAnalysis: React.FC<TemporalAnalysisProps> = ({ dataset, onS
                       top: `${region.y}%`,
                       width: `${region.width}%`,
                       height: `${region.height}%`,
-                      border: `1.5px solid ${region.color}`,
+                      border: `1.5px solid ${borderCol}`,
                       backgroundColor: isHov ? 'rgba(255, 153, 0, 0.35)' : 'rgba(255, 153, 0, 0.12)',
                       cursor: 'pointer',
                       zIndex: 20,
@@ -308,8 +406,8 @@ export const TemporalAnalysis: React.FC<TemporalAnalysisProps> = ({ dataset, onS
                       bottom: '100%',
                       left: 0,
                       background: 'rgba(0, 0, 0, 0.9)',
-                      border: `1px solid ${region.color}`,
-                      color: region.color,
+                      border: `1px solid ${borderCol}`,
+                      color: borderCol,
                       fontSize: '0.58rem',
                       fontFamily: 'var(--font-mono)',
                       padding: '1px 4px',
@@ -339,34 +437,99 @@ export const TemporalAnalysis: React.FC<TemporalAnalysisProps> = ({ dataset, onS
           )}
         </div>
 
-        {/* Legend strip */}
+        {/* Interactive Legend Strip with Category Filter buttons */}
         <div style={{
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center',
-          background: 'rgba(10, 14, 20, 0.6)',
+          background: 'rgba(10, 14, 20, 0.85)',
           border: '1px solid var(--border-dim)',
-          padding: '6px 12px',
+          padding: '8px 12px',
           fontFamily: 'var(--font-mono)',
-          fontSize: '0.65rem'
+          fontSize: '0.68rem',
+          flexWrap: 'wrap',
+          gap: '8px'
         }}>
-          <div style={{ display: 'flex', gap: '14px' }}>
-            <span style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+          <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+            <button
+              onClick={() => setActiveCategoryFilter('all')}
+              style={{
+                background: activeCategoryFilter === 'all' ? 'rgba(255, 255, 255, 0.15)' : 'transparent',
+                color: activeCategoryFilter === 'all' ? '#fff' : 'var(--text-dim)',
+                border: `1px solid ${activeCategoryFilter === 'all' ? '#fff' : 'transparent'}`,
+                padding: '2px 6px',
+                cursor: 'pointer',
+                fontFamily: 'var(--font-mono)',
+                fontSize: '0.65rem',
+                borderRadius: '2px'
+              }}
+            >
+              ALL ({rawRegions.length})
+            </button>
+
+            <button
+              onClick={() => setActiveCategoryFilter(activeCategoryFilter === 'structure' ? 'all' : 'structure')}
+              style={{
+                background: activeCategoryFilter === 'structure' ? 'rgba(255, 153, 0, 0.2)' : 'transparent',
+                color: activeCategoryFilter === 'structure' ? '#ff9900' : '#cbd5e1',
+                border: `1px solid ${activeCategoryFilter === 'structure' ? '#ff9900' : 'rgba(255, 153, 0, 0.3)'}`,
+                padding: '2px 8px',
+                cursor: 'pointer',
+                fontFamily: 'var(--font-mono)',
+                fontSize: '0.65rem',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '5px',
+                borderRadius: '2px'
+              }}
+            >
               <span style={{ width: '8px', height: '8px', backgroundColor: '#ff9900' }} />
-              Potential Structural Change
-            </span>
-            <span style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+              <span>🏢 Potential Structural Change ({rawRegions.filter(r => r.category === 'structure').length})</span>
+            </button>
+
+            <button
+              onClick={() => setActiveCategoryFilter(activeCategoryFilter === 'vegetation' ? 'all' : 'vegetation')}
+              style={{
+                background: activeCategoryFilter === 'vegetation' ? 'rgba(16, 185, 129, 0.2)' : 'transparent',
+                color: activeCategoryFilter === 'vegetation' ? '#10b981' : '#cbd5e1',
+                border: `1px solid ${activeCategoryFilter === 'vegetation' ? '#10b981' : 'rgba(16, 185, 129, 0.3)'}`,
+                padding: '2px 8px',
+                cursor: 'pointer',
+                fontFamily: 'var(--font-mono)',
+                fontSize: '0.65rem',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '5px',
+                borderRadius: '2px'
+              }}
+            >
               <span style={{ width: '8px', height: '8px', backgroundColor: '#10b981' }} />
-              Potential Vegetation Change
-            </span>
-            <span style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+              <span>🌳 Potential Vegetation Change ({rawRegions.filter(r => r.category === 'vegetation').length})</span>
+            </button>
+
+            <button
+              onClick={() => setActiveCategoryFilter(activeCategoryFilter === 'high_intensity' ? 'all' : 'high_intensity')}
+              style={{
+                background: activeCategoryFilter === 'high_intensity' ? 'rgba(244, 63, 94, 0.2)' : 'transparent',
+                color: activeCategoryFilter === 'high_intensity' ? '#f43f5e' : '#cbd5e1',
+                border: `1px solid ${activeCategoryFilter === 'high_intensity' ? '#f43f5e' : 'rgba(244, 63, 94, 0.3)'}`,
+                padding: '2px 8px',
+                cursor: 'pointer',
+                fontFamily: 'var(--font-mono)',
+                fontSize: '0.65rem',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '5px',
+                borderRadius: '2px'
+              }}
+            >
               <span style={{ width: '8px', height: '8px', backgroundColor: '#f43f5e' }} />
-              High-Intensity Surface Shift
-            </span>
+              <span>🛣️ High-Intensity Surface Shift ({rawRegions.filter(r => r.category === 'high_intensity').length})</span>
+            </button>
           </div>
 
-          <div style={{ color: 'var(--text-dim)' }}>
-            [Click detected region to inspect telemetry]
+          <div style={{ color: '#00f0ff', fontSize: '0.62rem', display: 'flex', alignItems: 'center', gap: '4px' }}>
+            <span>⚡ Click any region overlay to inspect telemetry</span>
           </div>
         </div>
 
