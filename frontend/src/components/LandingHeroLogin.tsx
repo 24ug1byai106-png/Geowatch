@@ -9,8 +9,7 @@ import {
   EyeOff, 
   AlertCircle,
   KeyRound,
-  Play,
-  ShieldAlert
+  Play
 } from 'lucide-react';
 
 interface LandingHeroLoginProps {
@@ -202,17 +201,16 @@ export const LandingHeroLogin: React.FC<LandingHeroLoginProps> = ({ onLoginSucce
           Monitor satellite imagery, detect meaningful human-made changes, and generate actionable geospatial alerts.
         </p>
 
-        {/* Primary Action Buttons: Opens Login Authentication */}
-        <div style={{ display: 'flex', gap: '14px', marginTop: '12px', flexWrap: 'wrap' }}>
-          
+        {/* Single Primary Action Button */}
+        <div style={{ marginTop: '14px' }}>
           <button
             onClick={() => setIsLoginOpen(true)}
             style={{
               background: '#00f0ff',
               color: '#040711',
               border: 'none',
-              padding: '13px 28px',
-              fontSize: '0.85rem',
+              padding: '14px 32px',
+              fontSize: '0.88rem',
               fontFamily: 'var(--font-mono)',
               fontWeight: 900,
               letterSpacing: '0.08em',
@@ -226,33 +224,9 @@ export const LandingHeroLogin: React.FC<LandingHeroLoginProps> = ({ onLoginSucce
             }}
           >
             <Play size={16} fill="#040711" />
-            <span>START NEW ANALYSIS</span>
+            <span>START NEW ANALYSIS & ENTER PORTAL</span>
+            <ArrowRight size={16} />
           </button>
-
-          <button
-            onClick={() => setIsLoginOpen(true)}
-            style={{
-              background: 'rgba(255, 255, 255, 0.08)',
-              color: '#ffffff',
-              border: '1px solid rgba(255, 255, 255, 0.35)',
-              padding: '13px 26px',
-              fontSize: '0.85rem',
-              fontFamily: 'var(--font-mono)',
-              fontWeight: 700,
-              letterSpacing: '0.06em',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '10px',
-              borderRadius: '2px',
-              backdropFilter: 'blur(8px)',
-              transition: 'all 0.2s ease'
-            }}
-          >
-            <ShieldAlert size={16} color="var(--accent-amber)" />
-            <span>EXPLORE MONITORING</span>
-          </button>
-
         </div>
 
       </div>
