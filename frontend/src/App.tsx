@@ -5,7 +5,7 @@ import { HeroStatus } from './components/HeroStatus';
 import { TemporalAnalysis } from './components/TemporalAnalysis';
 import { DetectionResults } from './components/DetectionResults';
 import { ObservationTelemetry } from './components/ObservationTelemetry';
-import { GisMapAnalysis } from './components/GisMapAnalysis';
+import { EnvironmentalHeatmapAnalysis } from './components/EnvironmentalHeatmapAnalysis';
 import { ChangeMapView } from './components/ChangeMapView';
 import { AiInsightsView } from './components/AiInsightsView';
 import { GeoDataView } from './components/GeoDataView';
@@ -209,7 +209,7 @@ export const App: React.FC = () => {
                 />
               </div>
 
-              {/* Bottom Section: Observation Telemetry (Left) + AI Vision GIS Map (Right) */}
+              {/* Bottom Section: Observation Telemetry (Left) + Environmental NDVI / LST Heatmap (Right) */}
               <div style={{
                 display: 'grid',
                 gridTemplateColumns: 'minmax(300px, 1fr) minmax(0, 1.85fr)',
@@ -219,9 +219,8 @@ export const App: React.FC = () => {
                 <ObservationTelemetry
                   coordinates={selectedDataset.coordinates}
                 />
-                <GisMapAnalysis
+                <EnvironmentalHeatmapAnalysis
                   dataset={selectedDataset}
-                  onSelectObject={(obj) => setSelectedObject(obj)}
                 />
               </div>
             </>
