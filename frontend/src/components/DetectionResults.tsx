@@ -241,27 +241,6 @@ export const DetectionResults: React.FC<DetectionResultsProps> = ({
           </p>
         </div>
 
-        {/* Algorithm & Pipeline Parameters */}
-        <div style={{
-          borderTop: '1px solid var(--border-dim)',
-          paddingTop: '8px',
-          display: 'flex',
-          flexDirection: 'column',
-          gap: '4px',
-          fontFamily: 'var(--font-mono)',
-          fontSize: '0.65rem'
-        }}>
-          <div style={{ color: 'var(--accent-amber)' }}>IMAGE DIFFERENCING PROTOCOL:</div>
-          <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--text-dim)' }}>
-            <span>METHOD:</span>
-            <span style={{ color: '#fff' }}>Pixel-wise Delta (Otsu Morphological)</span>
-          </div>
-          <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--text-dim)' }}>
-            <span>SOURCE DATA:</span>
-            <span style={{ color: '#60a5fa' }}>{dataset.dataSource} ({dataset.beforeYear} / {dataset.afterYear})</span>
-          </div>
-        </div>
-
         {/* Multi-Format Export Actions: PDF, DOCX, JSON */}
         <div style={{ marginTop: 'auto', display: 'flex', flexDirection: 'column', gap: '6px' }}>
           <div style={{ fontSize: '0.62rem', fontFamily: 'var(--font-mono)', color: 'var(--text-dim)', letterSpacing: '0.06em' }}>
