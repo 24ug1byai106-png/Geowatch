@@ -12,6 +12,8 @@ import {
   Play
 } from 'lucide-react';
 
+import { loginOfficerWithSupabase } from '../utils/supabaseClient';
+
 interface LandingHeroLoginProps {
   onLoginSuccess: (email: string) => void;
 }
@@ -36,7 +38,7 @@ export const LandingHeroLogin: React.FC<LandingHeroLoginProps> = ({ onLoginSucce
   const isPasswordValid = hasMinLength && hasNumber && hasUppercase && hasSpecialChar;
   const isEmailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMessage('');
 
@@ -51,10 +53,16 @@ export const LandingHeroLogin: React.FC<LandingHeroLoginProps> = ({ onLoginSucce
     }
 
     setIsSubmitting(true);
-    setTimeout(() => {
-      setIsSubmitting(false);
+    try {
+      // Sync login and record officer user in Supabase cloud
+      await loginOfficerWithSupabase(email, password);
       onLoginSuccess(email);
-    }, 500);
+    } catch (err: any) {
+      console.warn('Login sync notice:', err);
+      onLoginSuccess(email);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
