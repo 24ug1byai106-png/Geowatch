@@ -1,66 +1,21 @@
-import React, { useState } from 'react';
-import { Sparkles, FileText, FileDown, Code2, Loader2, Play, Cpu } from 'lucide-react';
+import React from 'react';
+import { Sparkles, Loader2, Play, Cpu } from 'lucide-react';
 import type { PresetDataset } from '../types';
-import { generateMissionPdfReport } from '../utils/pdfGenerator';
-import { generateChangeDetectionDocx } from '../utils/docxGenerator';
 
 interface DetectionResultsProps {
   dataset: PresetDataset;
-  onDownloadReport: () => void;
+  onDownloadReport?: () => void;
   onRunAnalysis?: () => void;
   isAnalyzing?: boolean;
 }
 
 export const DetectionResults: React.FC<DetectionResultsProps> = ({ 
   dataset, 
-  onDownloadReport,
   onRunAnalysis,
   isAnalyzing = false
 }) => {
   const result = dataset.analysisResult;
   const isAnalyzed = !!result;
-  const [isGeneratingPdf, setIsGeneratingPdf] = useState<boolean>(false);
-  const [isGeneratingDocx, setIsGeneratingDocx] = useState<boolean>(false);
-
-  const handleDownloadPdf = async () => {
-    if (!isAnalyzed) return;
-    setIsGeneratingPdf(true);
-    try {
-      const { pdfBlob, filename } = await generateMissionPdfReport(dataset);
-      const url = URL.createObjectURL(pdfBlob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = filename;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-    } catch (err) {
-      console.error('PDF export error:', err);
-    } finally {
-      setIsGeneratingPdf(false);
-    }
-  };
-
-  const handleDownloadDocx = async () => {
-    if (!isAnalyzed) return;
-    setIsGeneratingDocx(true);
-    try {
-      const docxBlob = await generateChangeDetectionDocx(dataset);
-      const url = URL.createObjectURL(docxBlob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `Hydra_Change_Report_${dataset.id}_${Date.now()}.docx`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-    } catch (err) {
-      console.error('DOCX export error:', err);
-    } finally {
-      setIsGeneratingDocx(false);
-    }
-  };
 
   return (
     <div className="hud-panel" style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
@@ -239,95 +194,6 @@ export const DetectionResults: React.FC<DetectionResultsProps> = ({
               ? result.aiSummary
               : 'Execute "INITIATE ANALYSIS" to run pixel differencing and generate dynamic statistical explanation from the observation pair.'}
           </p>
-        </div>
-
-        {/* Multi-Format Export Actions: PDF, DOCX, JSON */}
-        <div style={{ marginTop: 'auto', display: 'flex', flexDirection: 'column', gap: '6px' }}>
-          <div style={{ fontSize: '0.62rem', fontFamily: 'var(--font-mono)', color: 'var(--text-dim)', letterSpacing: '0.06em' }}>
-            EXPORT ANALYSIS DOSSIER (MULTI-FORMAT):
-          </div>
-
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '6px' }}>
-            
-            {/* 1. PDF Report */}
-            <button
-              onClick={handleDownloadPdf}
-              disabled={!isAnalyzed || isGeneratingPdf}
-              style={{
-                background: 'rgba(0, 240, 255, 0.12)',
-                border: '1px solid #00f0ff',
-                color: '#00f0ff',
-                padding: '8px 4px',
-                fontSize: '0.66rem',
-                fontFamily: 'var(--font-mono)',
-                fontWeight: 700,
-                cursor: !isAnalyzed || isGeneratingPdf ? 'not-allowed' : 'pointer',
-                opacity: !isAnalyzed ? 0.4 : 1,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '4px',
-                borderRadius: '2px',
-                transition: 'all 0.15s ease'
-              }}
-            >
-              {isGeneratingPdf ? <Loader2 size={12} className="animate-spin" /> : <FileDown size={12} />}
-              <span>PDF</span>
-            </button>
-
-            {/* 2. DOCX Word Report */}
-            <button
-              onClick={handleDownloadDocx}
-              disabled={!isAnalyzed || isGeneratingDocx}
-              style={{
-                background: 'rgba(96, 165, 250, 0.12)',
-                border: '1px solid #60a5fa',
-                color: '#60a5fa',
-                padding: '8px 4px',
-                fontSize: '0.66rem',
-                fontFamily: 'var(--font-mono)',
-                fontWeight: 700,
-                cursor: !isAnalyzed || isGeneratingDocx ? 'not-allowed' : 'pointer',
-                opacity: !isAnalyzed ? 0.4 : 1,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '4px',
-                borderRadius: '2px',
-                transition: 'all 0.15s ease'
-              }}
-            >
-              {isGeneratingDocx ? <Loader2 size={12} className="animate-spin" /> : <FileText size={12} />}
-              <span>DOCX</span>
-            </button>
-
-            {/* 3. JSON Raw Telemetry */}
-            <button
-              onClick={onDownloadReport}
-              disabled={!isAnalyzed}
-              style={{
-                background: 'rgba(255, 153, 0, 0.12)',
-                border: '1px solid var(--accent-amber)',
-                color: 'var(--accent-amber)',
-                padding: '8px 4px',
-                fontSize: '0.66rem',
-                fontFamily: 'var(--font-mono)',
-                fontWeight: 700,
-                cursor: !isAnalyzed ? 'not-allowed' : 'pointer',
-                opacity: !isAnalyzed ? 0.4 : 1,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '4px',
-                borderRadius: '2px',
-                transition: 'all 0.15s ease'
-              }}
-            >
-              <Code2 size={12} />
-              <span>JSON</span>
-            </button>
-
-          </div>
         </div>
 
       </div>

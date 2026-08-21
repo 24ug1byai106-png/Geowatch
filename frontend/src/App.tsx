@@ -124,45 +124,6 @@ export const App: React.FC = () => {
     addLog(`Updated compliance status for ${alertId} to ${newStatus}.`, 'info');
   };
 
-  const handleDownloadReport = () => {
-    const result = selectedDataset.analysisResult;
-    const reportData = {
-      project: "HYDRA POSITIONING SYSTEM - GEOSPATIAL CHANGE DETECTION",
-      target_region: selectedDataset.name,
-      city: selectedDataset.region,
-      data_source: selectedDataset.dataSource,
-      coordinates: selectedDataset.coordinates,
-      observation_files: {
-        before_tif: selectedDataset.beforeTifName,
-        after_tif: selectedDataset.afterTifName,
-        before_year: selectedDataset.beforeYear,
-        after_year: selectedDataset.afterYear
-      },
-      calculated_results: result ? {
-        total_change_regions: result.totalChangeRegions,
-        changed_area_percentage: result.changedAreaPercentage,
-        total_changed_sq_meters: result.totalChangedSqMeters,
-        change_intensity: result.changeIntensityLabel,
-        largest_change_region: result.largestRegionName,
-        largest_change_area_sqm: result.largestRegionArea,
-        structural_shifts_count: result.structuralCount,
-        vegetation_changes_count: result.vegetationCount,
-        high_intensity_shifts_count: result.highIntensityCount,
-        ai_summary: result.aiSummary,
-        regions: result.regions
-      } : "NOT ANALYZED"
-    };
-
-    const blob = new Blob([JSON.stringify(reportData, null, 2)], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `GEOWATCH_WHITEFIELD_REPORT_${Date.now()}.json`;
-    a.click();
-    URL.revokeObjectURL(url);
-    addLog(`Exported calculated JSON report for ${selectedDataset.name}`, 'success');
-  };
-
   // Render Full Hero & Official Login Portal if unauthenticated
   if (!isAuthenticated) {
     return (
@@ -242,7 +203,6 @@ export const App: React.FC = () => {
                 />
                 <DetectionResults
                   dataset={selectedDataset}
-                  onDownloadReport={handleDownloadReport}
                   onRunAnalysis={() => handleRunAnalysis(selectedDataset)}
                   isAnalyzing={isAnalyzing}
                 />
