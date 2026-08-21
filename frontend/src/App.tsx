@@ -224,7 +224,7 @@ export const App: React.FC = () => {
                 alignItems: 'stretch'
               }}>
                 <ObservationTelemetry
-                  coordinates={selectedDataset.coordinates}
+                  dataset={selectedDataset}
                 />
                 <EnvironmentalHeatmapAnalysis
                   dataset={selectedDataset}
