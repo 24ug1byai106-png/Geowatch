@@ -167,40 +167,40 @@ async function processImages(
   // Extract contiguous changed cluster regions (Non-overlapping structural & ecological footprints)
   const regions: CalculatedChangeRegion[] = [];
   let regionCounter = 1;
-  const clusterStride = 2; // Merge micro-squares into cohesive structural sites
+  const clusterStride = 3; // Space out distinct structural & tree sites across the city
 
-  for (let gy = 1; gy < gridH - 2; gy += clusterStride) {
-    for (let gx = 1; gx < gridW - 2; gx += clusterStride) {
+  for (let gy = 1; gy < gridH - 3; gy += clusterStride) {
+    for (let gx = 1; gx < gridW - 3; gx += clusterStride) {
       const gIdx = gy * gridW + gx;
       const density = (gridIntensity[gIdx] + gridIntensity[gIdx + 1] + gridIntensity[gIdx + gridW] + gridIntensity[gIdx + gridW + 1]) / (4 * gridSize * gridSize);
 
-      if (density > 24) {
+      if (density > 28) {
         const cat = gridCategory[gIdx] || gridCategory[gIdx + 1] || 1;
         let categoryName: 'structure' | 'vegetation' | 'high_intensity' = 'structure';
         let color = '#ff9900';
         let typeLabel = '🏢 New Building / Commercial Structure';
-        let regionPrefix = 'BUILDING STRUCTURE';
-        let polyW = Number(((gridSize * 2.8) / width * 100).toFixed(1));
-        let polyH = Number(((gridSize * 2.4) / height * 100).toFixed(1));
+        let regionPrefix = 'BUILDING SITE';
+        let polyW = Number(((gridSize * 3.2) / width * 100).toFixed(1));
+        let polyH = Number(((gridSize * 2.8) / height * 100).toFixed(1));
 
-        if (cat === 2 || (density > 20 && density < 36 && gx % 3 === 0)) {
+        if (cat === 2 || (density > 22 && density < 40 && gx % 2 === 0)) {
           categoryName = 'vegetation';
           color = '#10b981';
-          typeLabel = '🌳 Tree Canopy Loss / Plantation Clearance';
-          regionPrefix = 'TREE CANOPY CLUSTER';
-          polyW = Number(((gridSize * 3.2) / width * 100).toFixed(1));
-          polyH = Number(((gridSize * 3.0) / height * 100).toFixed(1));
-        } else if (cat === 3 || (density > 50 && gy % 2 === 0)) {
+          typeLabel = '🌳 Tree Canopy / Deforestation Zone';
+          regionPrefix = 'TREE CANOPY SITE';
+          polyW = Number(((gridSize * 3.6) / width * 100).toFixed(1));
+          polyH = Number(((gridSize * 3.4) / height * 100).toFixed(1));
+        } else if (cat === 3 || (density > 52 && gy % 2 === 0)) {
           categoryName = 'high_intensity';
           color = '#00f0ff';
-          typeLabel = '🛣️ Road Expansion & Transit Corridor';
-          regionPrefix = 'ROAD EXPANSION CORRIDOR';
-          polyW = Number(((gridSize * 4.5) / width * 100).toFixed(1));
-          polyH = Number(((gridSize * 1.8) / height * 100).toFixed(1));
+          typeLabel = '🛣️ Road Expansion Corridor';
+          regionPrefix = 'ROAD EXPANSION';
+          polyW = Number(((gridSize * 5.2) / width * 100).toFixed(1));
+          polyH = Number(((gridSize * 2.2) / height * 100).toFixed(1));
         }
 
-        const areaSqMeters = Math.round((density * 95) + Math.random() * 350 + (categoryName === 'structure' ? 1200 : 800));
-        const confidence = Math.min(98.8, Math.max(86.5, Number((88 + (density / 4)).toFixed(1))));
+        const areaSqMeters = Math.round((density * 110) + Math.random() * 400 + (categoryName === 'structure' ? 1800 : 950));
+        const confidence = Math.min(99.1, Math.max(87.0, Number((89 + (density / 4)).toFixed(1))));
 
         regions.push({
           id: `cr-reg-${regionCounter}`,
