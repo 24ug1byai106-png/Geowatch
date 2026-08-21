@@ -4,6 +4,8 @@ import { Sidebar } from './components/Sidebar';
 import { HeroStatus } from './components/HeroStatus';
 import { TemporalAnalysis } from './components/TemporalAnalysis';
 import { DetectionResults } from './components/DetectionResults';
+import { ObservationTelemetry } from './components/ObservationTelemetry';
+import { EnvironmentalHeatmapAnalysis } from './components/EnvironmentalHeatmapAnalysis';
 import { ChangeMapView } from './components/ChangeMapView';
 import { AiInsightsView } from './components/AiInsightsView';
 import { GeoDataView } from './components/GeoDataView';
@@ -250,6 +252,21 @@ export const App: React.FC = () => {
                   onDownloadReport={handleDownloadReport}
                   onRunAnalysis={() => handleRunAnalysis(selectedDataset)}
                   isAnalyzing={isAnalyzing}
+                />
+              </div>
+
+              {/* Bottom Section: Observation Telemetry (Radar Active) + Ecological NDVI & LST Thermal Heatmap */}
+              <div style={{
+                display: 'grid',
+                gridTemplateColumns: 'minmax(300px, 1fr) minmax(0, 1.85fr)',
+                gap: '18px',
+                alignItems: 'stretch'
+              }}>
+                <ObservationTelemetry
+                  dataset={selectedDataset}
+                />
+                <EnvironmentalHeatmapAnalysis
+                  dataset={selectedDataset}
                 />
               </div>
             </>
