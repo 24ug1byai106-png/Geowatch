@@ -98,6 +98,53 @@ export interface AnalysisExplanation {
   severity: 'LOW' | 'MEDIUM' | 'HIGH';
 }
 
+export type GovernmentAlertStatus = 
+  | 'NEW' 
+  | 'UNDER REVIEW' 
+  | 'FIELD VERIFICATION REQUIRED' 
+  | 'VERIFIED' 
+  | 'DISMISSED' 
+  | 'RESOLVED';
+
+export type GovernmentAlertSeverity = 'HIGH' | 'MEDIUM' | 'LOW';
+
+export type GovernmentAlertCategory =
+  | 'Potential Unauthorized Construction'
+  | 'Potential Road Encroachment'
+  | 'Potential Road Expansion'
+  | 'Vegetation Clearing'
+  | 'Potential Deforestation'
+  | 'Potential Land Encroachment'
+  | 'Water Body Encroachment'
+  | 'New Construction'
+  | 'Major Land-Use Change'
+  | 'Infrastructure Expansion';
+
+export interface GovernmentAlert {
+  id: string; // e.g. HPS-2026-000124
+  title: string;
+  category: GovernmentAlertCategory;
+  status: GovernmentAlertStatus;
+  severity: GovernmentAlertSeverity;
+  confidence: number;
+  affectedAreaSqm: number;
+  location: string;
+  coordinates: [number, number];
+  aoiName: string;
+  beforeDate: string;
+  afterDate: string;
+  satelliteSource: string;
+  processingMethod: string;
+  description: string;
+  beforeDescription: string;
+  afterDescription: string;
+  observedChange: string;
+  recommendedAction: string[];
+  regionRef?: CalculatedChangeRegion;
+  documentHash: string;
+  createdAt: string;
+}
+
 export interface PresetDataset {
   id: string;
   name: string;
@@ -113,3 +160,4 @@ export interface PresetDataset {
   afterTifName: string;
   analysisResult?: ImageAnalysisResult | null;
 }
+

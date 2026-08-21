@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Bell, User, Globe2 } from 'lucide-react';
+import { Bell, User } from 'lucide-react';
 
 interface NavbarProps {
   onOpenLogs: () => void;
@@ -32,34 +32,39 @@ export const Navbar: React.FC<NavbarProps> = ({
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            width: '36px',
-            height: '36px',
-            border: '1px solid var(--accent-amber)',
-            background: 'rgba(255, 153, 0, 0.12)',
-            color: 'var(--accent-amber)',
-            boxShadow: '0 0 12px rgba(255, 153, 0, 0.3)'
+            width: '38px',
+            height: '38px',
+            border: '1px solid #00f0ff',
+            background: 'rgba(0, 240, 255, 0.12)',
+            color: '#00f0ff',
+            boxShadow: '0 0 14px rgba(0, 240, 255, 0.4)',
+            borderRadius: '3px'
           }}>
-            <Globe2 size={22} />
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#00f0ff" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+              <polygon points="12 2 2 7 12 12 22 7 12 2" />
+              <polyline points="2 17 12 22 22 17" />
+              <polyline points="2 12 12 17 22 12" />
+            </svg>
           </div>
           <div>
             <h1 style={{
               fontFamily: 'var(--font-tech)',
               fontSize: '1.25rem',
-              fontWeight: 800,
-              letterSpacing: '0.1em',
-              color: '#ff9900',
-              textShadow: '0 0 10px rgba(255, 153, 0, 0.35)',
+              fontWeight: 900,
+              letterSpacing: '0.12em',
+              color: '#00f0ff',
+              textShadow: '0 0 12px rgba(0, 240, 255, 0.45)',
               margin: 0,
               lineHeight: 1.1
             }}>
-              GEOWATCH // EARTH OBSERVATION MISSION
+              HYDRA POSITIONING SYSTEM
             </h1>
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '0.68rem', color: 'var(--text-dim)', fontFamily: 'var(--font-mono)', marginTop: '2px' }}>
-              <span style={{ color: '#e2e8f0', letterSpacing: '0.06em' }}>AI GEOSPATIAL CHANGE DETECTION</span>
+              <span style={{ color: 'var(--accent-amber)', letterSpacing: '0.06em', fontWeight: 'bold' }}>GOVERNMENT GEOSPATIAL INTELLIGENCE</span>
               <span>•</span>
               <span>IST: <strong style={{ color: '#fff' }}>{time}</strong></span>
               <span>•</span>
-              <span>{utcTime}</span>
+              <span>UTC: <strong style={{ color: '#fff' }}>{utcTime}</strong></span>
             </div>
           </div>
         </div>

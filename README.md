@@ -1,6 +1,7 @@
-# 🛰️ GeoWatch: AI-Powered Geospatial Change Detection Platform
+# ⬡ HYDRA POSITIONING SYSTEM
 
-> **Smart India Hackathon (SIH) Problem Statement**: `SIH260009` — *Automated change detection due to human activities using multi-temporal Earth Observation satellite imagery.*
+> **Government Earth Observation & AI-Powered Geospatial Intelligence Platform**
+> *SIH Problem Statement SIH260009 — Automated change detection due to human activities using multi-temporal Earth Observation satellite imagery.*
 
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.115+-009688.svg?style=flat&logo=FastAPI&logoColor=white)](https://fastapi.tiangolo.com)
 [![React](https://img.shields.io/badge/React-19.0-61DAFB.svg?style=flat&logo=React&logoColor=black)](https://react.dev)
@@ -13,9 +14,9 @@
 
 ## 📌 Overview
 
-**GeoWatch** is an end-to-end geospatial intelligence and remote-sensing change detection system designed to autonomously monitor, classify, and explain human-driven physical landscape changes between temporal satellite passes (e.g. **Sentinel-2B Level-1C / Level-2A MSI**).
+**HYDRA POSITIONING SYSTEM** is an end-to-end government geospatial intelligence and multi-temporal remote-sensing change detection platform. It autonomously monitors, classifies, and documents human-driven physical landscape shifts between temporal satellite passes (e.g. **Copernicus Sentinel-2B Level-1C / Level-2A MSI**).
 
-It bridges the gap between raw multi-spectral satellite imagery and actionable civic governance by identifying **new building construction**, **transportation corridor expansions**, **tree canopy clearance / deforestation**, and **zoning compliance risks**.
+The system equips municipal planning authorities, forest departments, and transportation ministries with **automated field verification alerts**, **evidence dossier generators (6-page PDF reports with SHA-256 integrity hashes)**, and **transmittal email workflows**.
 
 ---
 
@@ -24,28 +25,34 @@ It bridges the gap between raw multi-spectral satellite imagery and actionable c
 ```mermaid
 flowchart TD
     subgraph Ingestion ["🛰️ Satellite Data Ingestion"]
-        S2_2024["Sentinel-2B (T1 - 2024)"]
-        S2_2026["Sentinel-2B (T2 - 2026)"]
-        Upload["Custom Multi-Spectral Upload\n(GeoTIFF, PNG, JPEG2000, ZIP)"]
+        S2_2024["Copernicus Sentinel-2B (T1 - 2024)"]
+        S2_2026["Copernicus Sentinel-2B (T2 - 2026)"]
+        Upload["Multi-Spectral GeoTIFF / JP2 Upload"]
     end
 
     subgraph Processing ["⚡ Remote-Sensing Pipeline"]
         CloudMask["☁️ Atmospheric & Cloud Filter\n(Otsu Spectral Mask)"]
         CoReg["📐 Radiometric Co-Registration\n& Histogram Normalization"]
         Diff["🔬 Pixel-wise Spectral Differencing\nΔ = √[(R₂-R₁)² + (G₂-G₁)² + (B₂-B₁)²]"]
-        Contour["📊 Morphological Clustering\n(Bounding Vectors & GSD Scaling)"]
+        Contour["📊 Morphological Clustering\n(Bounding Vectors & 10m GSD Scaling)"]
+    end
+
+    subgraph GovModule ["🛡️ Government Monitoring & Alerts"]
+        AlertQueue["📋 Government Monitoring Queue\n(HPS-2026-XXXXXX Alert IDs)"]
+        StatusWorkflow["🔄 Status Workflow\n(NEW ➔ UNDER REVIEW ➔ FIELD VERIFICATION ➔ VERIFIED ➔ RESOLVED)"]
+        PDFGen["📄 6-Page PDF Evidence Dossier\n(SHA-256 Document Hash + North Arrows)"]
+        EmailShare["✉️ Transmittal Email Dispatch\n(Safe SMTP Fallback)"]
     end
 
     subgraph AI ["🧠 Multimodal AI & Analytics"]
         Groq["🦙 Groq Llama 3.3 70B Engine\n(Executive Civic Intelligence)"]
         CivicAudit["🏛️ Civic & Municipal Audit\n(Roads, Buildings, Trees, Tax)"]
-        AskAI["🤖 Contextual Ask GeoWatch Assistant"]
+        AskAI["🤖 Hydra AI Assistant"]
     end
 
-    subgraph Outputs ["🗺️ Interactive Outputs"]
-        GISMap["🗺️ Interactive Leaflet GIS Map\n(Building Blueprints & Tree Markers)"]
-        GeoJSON["📂 PostGIS & GeoJSON API\n(Vector Polygons Export)"]
-        Timeline["📈 Multi-Year Historical Timeline"]
+    subgraph Outputs ["🗺️ Interactive GIS & Heatmaps"]
+        GISMap["🗺️ Change Map Vector Outlines\n(🏢 Buildings, 🌳 Trees, 🛣️ Roads)"]
+        NDVIMap["🌱 Ecological NDVI & Thermal LST Heatmap\n(Surface Temp Rise & Wetland Loss)"]
     end
 
     S2_2024 --> CloudMask
@@ -53,108 +60,73 @@ flowchart TD
     Upload --> CloudMask
 
     CloudMask --> CoReg --> Diff --> Contour
-    Contour --> CivicAudit
-    Contour --> Groq --> AskAI
+    Contour --> AlertQueue --> StatusWorkflow
+    AlertQueue --> PDFGen
+    AlertQueue --> EmailShare
+    Contour --> CivicAudit --> Groq --> AskAI
     Contour --> GISMap
-    Contour --> GeoJSON
-    CivicAudit --> Timeline
+    Contour --> NDVIMap
 ```
 
 ---
 
-## ✨ Key Features
+## ✨ Key Capabilities
 
-### 1. 🛰️ Multi-Temporal Change Detection
-- **Cloud-Masked Differencing**: Filters bright cloud patches and atmospheric artifacts to avoid false-positive detections.
-- **Comparison Modes**: Includes `SPLIT VIEW`, interactive `SWIPE` slider, `OVERLAY` opacity slider, and dedicated `CHANGE MAP`.
+### 1. 🛡️ Government Monitoring & Field Alerts
+- Standardized Alert ID format: **`HPS-YYYY-XXXXXX`** (e.g. `HPS-2026-000101`).
+- Compliance categories:
+  - Potential Unauthorized Construction
+  - Potential Road Encroachment & Expansion
+  - Vegetation Clearing & Deforestation
+  - Potential Land / Water Body Encroachment
+  - Major Land-Use Change
+- **Legal Compliance Standard**: Never claims "illegal activity confirmed" based solely on imagery; provides evidence for field review with status: `NEW`, `UNDER REVIEW`, `FIELD VERIFICATION REQUIRED`, `VERIFIED`, `DISMISSED`, `RESOLVED`.
 
-### 2. 🏛️ Government & Civic Infrastructure Audit
-- 🛣️ **Roads Expanded**: Measures linear transport network expansion (+km) and paved asphalt footprint ($m^2$).
-- 🏢 **Buildings Constructed**: Identifies discrete structural footprints, high-density clusters, and estimated municipal property tax additions.
-- 🌳 **Trees Felled / Canopy Loss**: Quantifies green canopy displaced and calculates the **1:10 Compensatory Reforestation Target**.
-- ⚖️ **Zoning & Municipal Compliance**: Flags unauthorized peripheral encroachments and provides municipal recommendations.
+### 2. 📄 Multi-Page PDF Evidence Dossier (`GENERATE GOVERNMENT REPORT`)
+- **Page 1 (Cover)**: Official Hydra Positioning System emblem, Report ID, status badge, acquisition dates, Copernicus attribution, and **SHA-256 Document Hash**.
+- **Page 2 (Executive Summary)**: What was detected, physical parameters, and impact classification.
+- **Page 3 (Satellite Evidence)**: 2024 vs 2026 optical granules with **North Arrow (`▲ N`)**, scale bar, and coordinates.
+- **Page 4 (Change Detection Map)**: Spectral mask and vector boundaries.
+- **Page 5 (Evidence Analysis)**: Before condition, after condition, and observed physical shift.
+- **Page 6 (Recommended Action)**: 5-step government field inspection protocol and **Mandatory Statutory Disclaimer**.
 
-### 3. 🗺️ Interactive GIS Vector Map
-- **Blueprint Vector Outlines**: Displays geometric architectural building footprints (🏢) and tree canopy clusters (🌳).
-- **Interactive Multi-Basemap**: Switch seamlessly between **Satellite** (Google/Esri), **OSM** (CartoDB Voyager), and **Dark Matter**.
-- **Confidence Threshold Slider (`50% – 95%`)**: Dynamically filters false positives in real time.
+### 3. ✉️ Email Dispatch & Shareable Link
+- Pre-populated transmittal letter attached with `Hydra_Positioning_System_Alert_HPS-2026-XXXXXX.pdf`.
+- Safe server check with 1-click fallback download if SMTP is unconfigured.
+- 1-click clipboard copy for secure internal sharing.
 
-### 4. 🤖 Contextual "Ask GeoWatch" AI Assistant
-- Powered by **Groq Llama 3.3 70B Versatile**.
-- Indexed with live calculated telemetry to answer specific queries:
-  - *"What are the major human-made changes?"*
-  - *"How many buildings and roads were expanded?"*
-  - *"What is the estimated tree canopy loss?"*
-
-### 5. 📂 PostGIS & GeoJSON Vector Storage
-- Stores detected change geometries directly in PostGIS tables.
-- 1-click **GeoJSON Export** with GPS coordinates, area ($m^2$), confidence, and classification properties.
-
----
-
-## 🛠️ Technology Stack
-
-| Layer | Technologies |
-| :--- | :--- |
-| **Frontend** | React 19, TypeScript, Vite, Leaflet, Lucide Icons, Vanilla CSS (Aerospace Dark HUD) |
-| **Backend** | FastAPI, Python 3.11, Uvicorn, SQLAlchemy, GeoAlchemy2, PostGIS |
-| **Computer Vision** | OpenCV (cv2), NumPy, Pillow, Glymur (JPEG2000 parser) |
-| **AI / LLM** | Groq Cloud SDK (`llama-3.3-70b-versatile`) |
+### 4. 🛰️ Multi-Temporal Remote Sensing & Ecological Heatmaps
+- **Cloud-Filtered Differencing**: Eliminates false positives from atmospheric reflections.
+- **Ecological NDVI & LST Heatmap**: Visualizes canopy chlorophyll loss and urban microclimate heating ($+2.8^\circ\text{C}$ rise).
+- **Dedicated Vector Change Map**: Blueprint polygons with discrete emoji pins (**`🏢`**, **`🌳`**, **`🛣️`**).
 
 ---
 
-## 🚀 Quick Start Guide
+## 🛠️ Quick Start
 
-### Prerequisites
-- **Node.js**: `v18+` or `v20+`
-- **Python**: `3.10+` or `3.11+`
-- **Git**
-
-### 1. Clone the Repository
 ```bash
+# 1. Clone
 git clone https://github.com/24ug1byai106-png/Geowatch.git
 cd Geowatch
-```
 
-### 2. Frontend Setup & Launch
-```bash
+# 2. Frontend
 cd frontend
 npm install
 npm run dev
-```
-*Frontend runs at:* **`http://localhost:5173`**
 
-### 3. Backend Setup & Launch
-```bash
-cd changedetec
-python -m venv venv
-# Windows:
-.\venv\Scripts\activate
-# Linux/macOS:
-source venv/bin/activate
-
-pip install -r requirements.txt
+# 3. Backend
+cd ../changedetec
 uvicorn app.main:app --reload --port 8000
 ```
-*FastAPI Docs available at:* **`http://localhost:8000/docs`**
 
 ---
 
-## ⚙️ Environment Configuration
+## 📜 Statutory Disclaimer
 
-Create a `.env` file in `changedetec/` or `frontend/`:
-
-```env
-# Optional Groq API Key for LLM Explanations (Pre-configured in client)
-VITE_GROQ_API_KEY=your_groq_api_key_here
-
-# PostgreSQL / PostGIS Database URL
-DATABASE_URL=postgresql://postgres:postgres@localhost:5432/geowatch_db
-```
+> *Hydra Positioning System provides satellite-based geospatial observations and AI-assisted change analysis. Satellite imagery alone cannot establish legal ownership, authorization, or illegality. This report is intended to support government review and field verification. Final determination should be made using applicable official records, regulations, and on-ground verification.*
 
 ---
 
-## 📄 License & Attribution
+## 📄 Copernicus Attribution
 
-- **Sentinel-2 Data**: Copernicus Sentinel data [2024–2026] processed by ESA / ISRO Bhuvan / GeoWatch Engine.
-- Built for **Smart India Hackathon (SIH 2024/2026)**.
+*Contains modified Copernicus Sentinel data [2024–2026] processed via Hydra Positioning System.*

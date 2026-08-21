@@ -21,13 +21,19 @@ import type { LogEntry } from './components/LogsDrawer';
 import { HelpModal } from './components/HelpModal';
 import { SENTINEL_2024_2026_DATASET, apiClient } from './api/client';
 import { performImageChangeDetection } from './utils/imageProcessing';
-import type { PresetDataset, CalculatedChangeRegion } from './types';
+import { GovernmentMonitoringView } from './components/GovernmentMonitoringView';
+import { GovernmentAlertDetailModal } from './components/GovernmentAlertDetailModal';
+import { generateGovernmentAlertsFromDataset } from './utils/alertGenerator';
+import type { PresetDataset, CalculatedChangeRegion, GovernmentAlert, GovernmentAlertStatus } from './types';
 
 export const App: React.FC = () => {
   // Screen state
   const [activeScreen, setActiveScreen] = useState<string>('analysis');
   const [selectedDataset, setSelectedDataset] = useState<PresetDataset>(SENTINEL_2024_2026_DATASET);
   const [selectedObject, setSelectedObject] = useState<CalculatedChangeRegion | null>(null);
+  const [alerts, setAlerts] = useState<GovernmentAlert[]>([]);
+  const [selectedAlert, setSelectedAlert] = useState<GovernmentAlert | null>(null);
+  const [isAlertDetailOpen, setIsAlertDetailOpen] = useState<boolean>(false);
   const [isAnalysisModalOpen, setIsAnalysisModalOpen] = useState<boolean>(false);
   const [isDatabaseModalOpen, setIsDatabaseModalOpen] = useState<boolean>(false);
   const [isAskAiOpen, setIsAskAiOpen] = useState<boolean>(false);
@@ -39,13 +45,13 @@ export const App: React.FC = () => {
     {
       id: 'log-1',
       time: new Date().toLocaleTimeString(),
-      message: 'GeoWatch Engine initialized. Target: Sentinel-2B (Tile T43PGQ) Bengaluru Metropolitan observation pair.',
+      message: 'Hydra Positioning System Engine initialized. Target: Sentinel-2B (Tile T43PGQ) Bengaluru Metropolitan observation pair.',
       type: 'success'
     },
     {
       id: 'log-2',
       time: new Date().toLocaleTimeString(),
-      message: 'Autonomous atmospheric & cloud spectral masking filter engaged.',
+      message: 'Government monitoring queue & autonomous cloud masking filter engaged.',
       type: 'info'
     }
   ]);
@@ -83,11 +89,16 @@ export const App: React.FC = () => {
           SENTINEL_2024_2026_DATASET.afterImage,
           38
         );
-        setSelectedDataset(prev => ({
-          ...prev,
+        const updatedDataset = {
+          ...SENTINEL_2024_2026_DATASET,
           analysisResult: result
-        }));
+        };
+        setSelectedDataset(updatedDataset);
+        const derivedAlerts = generateGovernmentAlertsFromDataset(updatedDataset);
+        setAlerts(derivedAlerts);
+
         addLog(`Completed pixel differencing for Sentinel-2 2024 vs 2026: detected ${result.totalChangeRegions} change regions (${result.changedAreaPercentage}% area modified).`, 'success');
+        addLog(`Generated ${derivedAlerts.length} government monitoring alerts requiring field review.`, 'info');
       } catch (err) {
         console.error('Initial analysis error', err);
       }
@@ -95,22 +106,18 @@ export const App: React.FC = () => {
     initAnalysis();
   }, []);
 
-  // Heartbeat backend check
-  useEffect(() => {
-    const checkBackend = async () => {
-      try {
-        await apiClient.checkHealth();
-      } catch {
-        // Local mode
-      }
-    };
-    checkBackend();
-  }, []);
+  const handleUpdateAlertStatus = (alertId: string, newStatus: GovernmentAlertStatus) => {
+    setAlerts(prev => prev.map(a => a.id === alertId ? { ...a, status: newStatus } : a));
+    if (selectedAlert && selectedAlert.id === alertId) {
+      setSelectedAlert(prev => prev ? { ...prev, status: newStatus } : null);
+    }
+    addLog(`Updated compliance status for ${alertId} to ${newStatus}.`, 'info');
+  };
 
   const handleDownloadReport = () => {
     const result = selectedDataset.analysisResult;
     const reportData = {
-      project: "GEOWATCH - AI GEOSPATIAL CHANGE DETECTION",
+      project: "HYDRA POSITIONING SYSTEM - GEOSPATIAL CHANGE DETECTION",
       target_region: selectedDataset.name,
       city: selectedDataset.region,
       data_source: selectedDataset.dataSource,
@@ -167,10 +174,11 @@ export const App: React.FC = () => {
           onInitiateAnalysis={() => setIsAnalysisModalOpen(true)}
           onOpenAskAi={() => {
             setIsAskAiOpen(true);
-            addLog('Launched Ask GeoWatch AI Assistant.', 'info');
+            addLog('Launched Ask Hydra AI Assistant.', 'info');
           }}
           onOpenLogs={() => setIsLogsOpen(true)}
           onOpenHelp={() => setIsHelpOpen(true)}
+          alertCount={alerts.filter(a => a.status === 'NEW' || a.status === 'FIELD VERIFICATION REQUIRED').length}
         />
 
         {/* Center Dashboard View Area */}
@@ -234,7 +242,21 @@ export const App: React.FC = () => {
             />
           )}
 
-          {/* SCREEN 3: DEDICATED GOVERNMENT & CIVIC AUDIT SCREEN */}
+          {/* SCREEN 3: DEDICATED GOVERNMENT MONITORING & FIELD ALERTS SCREEN */}
+          {activeScreen === 'monitoring' && (
+            <GovernmentMonitoringView
+              alerts={alerts}
+              dataset={selectedDataset}
+              onSelectAlert={(alert) => {
+                setSelectedAlert(alert);
+                setIsAlertDetailOpen(true);
+              }}
+              onOpenAskAi={() => setIsAskAiOpen(true)}
+              onLog={addLog}
+            />
+          )}
+
+          {/* SCREEN 4: DEDICATED CIVIC AUDIT SCREEN */}
           {(activeScreen === 'government' || activeScreen === 'ai_insights') && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
               <GovernmentAuditPanel
@@ -247,12 +269,12 @@ export const App: React.FC = () => {
             </div>
           )}
 
-          {/* SCREEN 4: GEO DATA REPOSITORY */}
+          {/* SCREEN 5: GEO DATA REPOSITORY */}
           {activeScreen === 'geo_data' && (
             <GeoDataView dataset={selectedDataset} onLog={addLog} />
           )}
 
-          {/* SCREEN 5: HISTORICAL ANALYTICS SCREEN */}
+          {/* SCREEN 6: HISTORICAL ANALYTICS SCREEN */}
           {activeScreen === 'analytics' && (
             <AnalyticsView
               onSelectDataset={(ds) => {
@@ -263,7 +285,7 @@ export const App: React.FC = () => {
             />
           )}
 
-          {/* SCREEN 6: API SYSTEM INTEGRATION CONSOLE */}
+          {/* SCREEN 7: API SYSTEM INTEGRATION CONSOLE */}
           {activeScreen === 'api' && (
             <ApiConsoleView />
           )}
@@ -280,6 +302,15 @@ export const App: React.FC = () => {
           setSelectedDataset(ds);
           addLog(`Updated observation dataset: ${ds.name}`, 'info');
         }}
+        onLog={addLog}
+      />
+
+      <GovernmentAlertDetailModal
+        alert={selectedAlert}
+        dataset={selectedDataset}
+        isOpen={isAlertDetailOpen}
+        onClose={() => setIsAlertDetailOpen(false)}
+        onUpdateStatus={handleUpdateAlertStatus}
         onLog={addLog}
       />
 

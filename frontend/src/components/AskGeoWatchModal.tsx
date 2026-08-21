@@ -38,7 +38,7 @@ export const AskGeoWatchModal: React.FC<AskGeoWatchModalProps> = ({
     {
       id: 'welcome',
       sender: 'assistant',
-      text: `Hello! I am **GeoWatch AI**, your geospatial remote-sensing assistant. I have indexed the active analysis for **${dataset.name}** (${dataset.beforeYear} vs ${dataset.afterYear}). You can ask me about newly built structures, road network expansion, tree canopy loss, or municipal zoning risks.`,
+      text: `Hello! I am **Hydra AI**, the geospatial intelligence assistant for the **Hydra Positioning System**. I have indexed the active satellite observation for **${dataset.name}** (${dataset.beforeYear} vs ${dataset.afterYear}). You can query me regarding detected building structures, transportation expansions, tree canopy clearing, or government verification alerts.`,
       timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
     }
   ]);
@@ -55,7 +55,7 @@ export const AskGeoWatchModal: React.FC<AskGeoWatchModalProps> = ({
     "What are the major human-made changes?",
     "How many new buildings and roads were built?",
     "What is the estimated tree canopy loss?",
-    "Are there any unauthorized encroachment risks?",
+    "Are there any suspected encroachment risks?",
     "Summarize this analysis for government authorities."
   ];
 
@@ -76,7 +76,7 @@ export const AskGeoWatchModal: React.FC<AskGeoWatchModalProps> = ({
 
     // Formulate Contextual Remote-Sensing Prompt for Groq AI
     const systemPrompt = `
-You are GeoWatch AI, an authoritative, professional geospatial intelligence assistant for ISRO & SIH change detection.
+You are Hydra AI, an authoritative, professional geospatial intelligence assistant for the Hydra Positioning System.
 Use STRICTLY the following calculated satellite change detection metrics for this analysis:
 
 CURRENT ANALYSIS CONTEXT:
@@ -96,7 +96,8 @@ CURRENT ANALYSIS CONTEXT:
 - Actionable Directive: ${audit?.actionableRecommendation || 'Continuous monitoring advised.'}
 - AI Summary: ${result?.aiSummary || 'Analysis completed.'}
 
-INSTRUCTIONS:
+LEGAL COMPLIANCE INSTRUCTIONS:
+- Never state "illegal activity confirmed". Use "Potential Unauthorized Activity", "Suspected Encroachment", "Requires Field Verification".
 - Answer accurately based ONLY on the metrics above.
 - Be concise, professional, and clear for urban planners and government stakeholders.
 - Format with markdown bolding or bullets where helpful.
@@ -210,7 +211,7 @@ INSTRUCTIONS:
             <div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <span style={{ fontFamily: 'var(--font-tech)', fontSize: '1rem', fontWeight: 800, color: '#fff' }}>
-                  ASK GEOWATCH AI ASSISTANT
+                  ASK HYDRA AI ASSISTANT
                 </span>
                 <span style={{ fontSize: '0.62rem', fontFamily: 'var(--font-mono)', color: '#00f0ff', background: 'rgba(0,240,255,0.1)', padding: '1px 6px', border: '1px solid rgba(0,240,255,0.3)' }}>
                   GROQ LLAMA 3.3 70B

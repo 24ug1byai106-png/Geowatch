@@ -8,7 +8,8 @@ import {
   HelpCircle, 
   History,
   Plus,
-  Bot
+  Bot,
+  ShieldAlert
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -18,6 +19,7 @@ interface SidebarProps {
   onOpenAskAi?: () => void;
   onOpenLogs: () => void;
   onOpenHelp: () => void;
+  alertCount?: number;
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({
@@ -26,19 +28,21 @@ export const Sidebar: React.FC<SidebarProps> = ({
   onInitiateAnalysis,
   onOpenAskAi,
   onOpenLogs,
-  onOpenHelp
+  onOpenHelp,
+  alertCount = 0
 }) => {
   const navItems = [
-    { id: 'analysis', label: 'ANALYSIS', sublabel: 'Before / After Differencing', symbol: '◈', icon: Layers },
+    { id: 'analysis', label: 'MISSION ANALYSIS', sublabel: 'Before / After Differencing', symbol: '◈', icon: Layers },
     { id: 'change_map', label: 'CHANGE MAP', sublabel: 'Geographic Polygons', symbol: '◉', icon: Globe },
-    { id: 'government', label: 'GOVERNMENT AUDIT', sublabel: 'Roads, Buildings & Trees', symbol: '🏛️', icon: Sparkles },
+    { id: 'monitoring', label: 'GOVERNMENT ALERTS', sublabel: 'Field Verification Queue', symbol: '🛡️', icon: ShieldAlert, badge: alertCount > 0 ? alertCount : undefined },
+    { id: 'government', label: 'CIVIC AUDIT', sublabel: 'Roads, Buildings & Taxes', symbol: '🏛️', icon: Sparkles },
     { id: 'geo_data', label: 'EXPORT DATA', sublabel: 'Polygons & GeoJSON', symbol: '◇', icon: Database },
     { id: 'analytics', label: 'TIMELINE', sublabel: 'Multi-Year History', symbol: '▣', icon: BarChart3 },
   ];
 
   return (
     <aside style={{
-      width: '260px',
+      width: '270px',
       background: 'var(--bg-panel)',
       borderRight: '1px solid var(--border-amber)',
       display: 'flex',
@@ -54,10 +58,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
       {/* Top Section: Status Card, Actions & Navigation */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
         
-        {/* GeoWatch Earth Observation Status Card */}
+        {/* Hydra Positioning System Status Card */}
         <div style={{
           border: '1px solid var(--border-dim)',
-          background: 'rgba(19, 27, 40, 0.7)',
+          background: 'rgba(10, 15, 26, 0.85)',
           padding: '10px 12px',
           display: 'flex',
           flexDirection: 'column',
@@ -67,27 +71,28 @@ export const Sidebar: React.FC<SidebarProps> = ({
             fontFamily: 'var(--font-tech)',
             fontSize: '0.85rem',
             fontWeight: 800,
-            color: 'var(--accent-amber)',
+            color: '#00f0ff',
             letterSpacing: '0.08em',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between'
           }}>
-            <span>GEOWATCH</span>
+            <span>HYDRA POSITIONING SYSTEM</span>
             <span style={{ fontSize: '0.65rem', color: '#10b981' }}>● ONLINE</span>
           </div>
 
           <div style={{
             fontFamily: 'var(--font-mono)',
             fontSize: '0.62rem',
-            color: '#cbd5e1',
-            letterSpacing: '0.04em'
+            color: 'var(--accent-amber)',
+            letterSpacing: '0.04em',
+            fontWeight: 'bold'
           }}>
-            EARTH OBSERVATION SYSTEM
+            GOVERNMENT EARTH OBSERVATION
           </div>
         </div>
 
-        {/* Action Buttons: New Analysis + Ask GeoWatch AI */}
+        {/* Action Buttons: New Analysis + Ask Hydra AI */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
           <button
             onClick={onInitiateAnalysis}
@@ -126,7 +131,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
               }}
             >
               <Bot size={15} />
-              <span>ASK GEOWATCH AI</span>
+              <span>ASK HYDRA AI</span>
             </button>
           )}
         </div>
@@ -177,7 +182,21 @@ export const Sidebar: React.FC<SidebarProps> = ({
                     {item.symbol}
                   </span>
                   <div>
-                    <div>{item.label}</div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <span>{item.label}</span>
+                      {item.badge && (
+                        <span style={{
+                          background: isActive ? '#07090e' : '#ef4444',
+                          color: isActive ? '#ff9900' : '#fff',
+                          fontSize: '0.58rem',
+                          padding: '1px 5px',
+                          borderRadius: '8px',
+                          fontWeight: 'bold'
+                        }}>
+                          {item.badge}
+                        </span>
+                      )}
+                    </div>
                     <div style={{
                       fontSize: '0.58rem',
                       color: isActive ? '#1c1917' : '#64748b',
