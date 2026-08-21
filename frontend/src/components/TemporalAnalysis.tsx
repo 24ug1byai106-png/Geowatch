@@ -1,20 +1,81 @@
 import React, { useState, useRef } from 'react';
+import { Upload, ImagePlus, Play, Loader2 } from 'lucide-react';
 import type { PresetDataset, CalculatedChangeRegion } from '../types';
+import { decodeUploadedFile } from '../utils/fileDecoder';
 
 interface TemporalAnalysisProps {
   dataset: PresetDataset;
   onSelectObject: (obj: CalculatedChangeRegion) => void;
+  onUpdateDataset?: (newDataset: PresetDataset) => void;
+  onTriggerAnalysis?: (targetDataset?: PresetDataset) => void;
+  isAnalyzing?: boolean;
 }
 
-export const TemporalAnalysis: React.FC<TemporalAnalysisProps> = ({ dataset, onSelectObject }) => {
+export const TemporalAnalysis: React.FC<TemporalAnalysisProps> = ({ 
+  dataset, 
+  onSelectObject,
+  onUpdateDataset,
+  onTriggerAnalysis,
+  isAnalyzing = false
+}) => {
   const [viewMode, setViewMode] = useState<'SPLIT VIEW' | 'SWIPE' | 'OVERLAY' | 'CHANGE MAP'>('SPLIT VIEW');
   const [swipePos, setSwipePos] = useState<number>(50);
   const [overlayOpacity, setOverlayOpacity] = useState<number>(50);
-  // Default to null so overlays ONLY appear when the user clicks a category
   const [activeCategoryFilter, setActiveCategoryFilter] = useState<'structure' | 'vegetation' | 'high_intensity' | null>(null);
   const [isHoveringObject, setIsHoveringObject] = useState<string | null>(null);
 
+  // File upload drawer / state
+  const [isUploading, setIsUploading] = useState<boolean>(false);
+  const [beforeFileName, setBeforeFileName] = useState<string>('');
+  const [afterFileName, setAfterFileName] = useState<string>('');
+
+  const beforeInputRef = useRef<HTMLInputElement>(null);
+  const afterInputRef = useRef<HTMLInputElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+
+  const handleUploadBefore = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    try {
+      setIsUploading(true);
+      const decoded = await decodeUploadedFile(file);
+      setBeforeFileName(file.name);
+      const updated: PresetDataset = {
+        ...dataset,
+        beforeImage: decoded.dataUrl,
+        beforeTifName: file.name,
+        beforeYear: 'T0 (Baseline)',
+        analysisResult: null // Reset analysis so it computes fresh on the new photo
+      };
+      if (onUpdateDataset) onUpdateDataset(updated);
+    } catch (err) {
+      console.error('Error uploading before image:', err);
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  const handleUploadAfter = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    try {
+      setIsUploading(true);
+      const decoded = await decodeUploadedFile(file);
+      setAfterFileName(file.name);
+      const updated: PresetDataset = {
+        ...dataset,
+        afterImage: decoded.dataUrl,
+        afterTifName: file.name,
+        afterYear: 'T1 (Observation)',
+        analysisResult: null // Reset analysis so it computes fresh on the new photo
+      };
+      if (onUpdateDataset) onUpdateDataset(updated);
+    } catch (err) {
+      console.error('Error uploading after image:', err);
+    } finally {
+      setIsUploading(false);
+    }
+  };
 
   const handleSwipeMove = (e: React.MouseEvent<HTMLDivElement> | React.TouchEvent<HTMLDivElement>) => {
     if (!containerRef.current) return;
@@ -67,6 +128,125 @@ export const TemporalAnalysis: React.FC<TemporalAnalysisProps> = ({ dataset, onS
             );
           })}
         </div>
+      </div>
+
+      {/* DIRECT SATELLITE PHOTO INGESTION BAR */}
+      <div style={{
+        background: 'rgba(6, 10, 20, 0.95)',
+        borderBottom: '1px solid var(--border-dim)',
+        padding: '10px 14px',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        flexWrap: 'wrap',
+        gap: '10px'
+      }}>
+        
+        {/* Upload Action Buttons */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+          <div style={{ fontSize: '0.68rem', fontFamily: 'var(--font-mono)', color: 'var(--accent-amber)', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <Upload size={13} />
+            <span>PROVIDE SATELLITE PHOTOS:</span>
+          </div>
+
+          {/* Hidden Native File Inputs (Accepts GeoTIFF, JP2, PNG, JPG, ZIP) */}
+          <input 
+            type="file" 
+            ref={beforeInputRef} 
+            onChange={handleUploadBefore} 
+            accept=".png,.jpg,.jpeg,.tif,.tiff,.jp2,.webp,.zip" 
+            style={{ display: 'none' }} 
+          />
+          <input 
+            type="file" 
+            ref={afterInputRef} 
+            onChange={handleUploadAfter} 
+            accept=".png,.jpg,.jpeg,.tif,.tiff,.jp2,.webp,.zip" 
+            style={{ display: 'none' }} 
+          />
+
+          {/* Upload Before (T0) */}
+          <button
+            onClick={() => beforeInputRef.current?.click()}
+            disabled={isUploading}
+            style={{
+              background: beforeFileName ? 'rgba(0, 240, 255, 0.15)' : 'rgba(255, 255, 255, 0.06)',
+              border: `1px solid ${beforeFileName ? '#00f0ff' : 'var(--border-dim)'}`,
+              color: beforeFileName ? '#00f0ff' : '#cbd5e1',
+              padding: '5px 10px',
+              fontSize: '0.68rem',
+              fontFamily: 'var(--font-mono)',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              borderRadius: '2px'
+            }}
+          >
+            <ImagePlus size={13} />
+            <span>{beforeFileName ? `T0: ${beforeFileName.slice(0, 16)}...` : '📁 Upload Before Photo (T0)'}</span>
+          </button>
+
+          {/* Upload After (T1) */}
+          <button
+            onClick={() => afterInputRef.current?.click()}
+            disabled={isUploading}
+            style={{
+              background: afterFileName ? 'rgba(255, 153, 0, 0.15)' : 'rgba(255, 255, 255, 0.06)',
+              border: `1px solid ${afterFileName ? 'var(--accent-amber)' : 'var(--border-dim)'}`,
+              color: afterFileName ? 'var(--accent-amber)' : '#cbd5e1',
+              padding: '5px 10px',
+              fontSize: '0.68rem',
+              fontFamily: 'var(--font-mono)',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              borderRadius: '2px'
+            }}
+          >
+            <ImagePlus size={13} />
+            <span>{afterFileName ? `T1: ${afterFileName.slice(0, 16)}...` : '📁 Upload After Photo (T1)'}</span>
+          </button>
+        </div>
+
+        {/* Instant Run Analysis Button */}
+        {onTriggerAnalysis && (
+          <button
+            onClick={() => onTriggerAnalysis(dataset)}
+            disabled={isAnalyzing || isUploading}
+            style={{
+              background: '#00f0ff',
+              color: '#040711',
+              border: 'none',
+              padding: '6px 14px',
+              fontSize: '0.72rem',
+              fontFamily: 'var(--font-mono)',
+              fontWeight: 900,
+              letterSpacing: '0.06em',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              borderRadius: '2px',
+              boxShadow: '0 0 12px rgba(0, 240, 255, 0.35)',
+              transition: 'all 0.15s ease'
+            }}
+          >
+            {isAnalyzing ? (
+              <>
+                <Loader2 size={13} className="spin" />
+                <span>PROCESSING...</span>
+              </>
+            ) : (
+              <>
+                <Play size={13} fill="#040711" />
+                <span>ANALYZE PHOTOS</span>
+              </>
+            )}
+          </button>
+        )}
+
       </div>
 
       {/* Main Image Comparison Area */}

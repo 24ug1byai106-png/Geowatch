@@ -4,8 +4,6 @@ import { Sidebar } from './components/Sidebar';
 import { HeroStatus } from './components/HeroStatus';
 import { TemporalAnalysis } from './components/TemporalAnalysis';
 import { DetectionResults } from './components/DetectionResults';
-import { ObservationTelemetry } from './components/ObservationTelemetry';
-import { EnvironmentalHeatmapAnalysis } from './components/EnvironmentalHeatmapAnalysis';
 import { ChangeMapView } from './components/ChangeMapView';
 import { AiInsightsView } from './components/AiInsightsView';
 import { GeoDataView } from './components/GeoDataView';
@@ -229,37 +227,29 @@ export const App: React.FC = () => {
                 onExploreMonitoring={() => setActiveScreen('monitoring')}
               />
 
-              {/* Top Section: Temporal Analysis (Left) + Detection Results (Right) */}
+              {/* Main Analysis Workspace: Temporal Change Viewer + Calculated Results */}
               <div style={{
                 display: 'grid',
                 gridTemplateColumns: 'minmax(0, 1.85fr) minmax(320px, 1fr)',
                 gap: '18px',
-                alignItems: 'stretch'
+                alignItems: 'stretch',
+                flex: 1
               }}>
                 <TemporalAnalysis
                   dataset={selectedDataset}
                   onSelectObject={(obj) => setSelectedObject(obj)}
+                  onUpdateDataset={(newDs) => {
+                    setSelectedDataset(newDs);
+                    addLog(`Updated satellite imagery for: ${newDs.name}`, 'info');
+                  }}
+                  onTriggerAnalysis={(targetDs) => handleRunAnalysis(targetDs || selectedDataset)}
+                  isAnalyzing={isAnalyzing}
                 />
                 <DetectionResults
                   dataset={selectedDataset}
                   onDownloadReport={handleDownloadReport}
                   onRunAnalysis={() => handleRunAnalysis(selectedDataset)}
                   isAnalyzing={isAnalyzing}
-                />
-              </div>
-
-              {/* Bottom Section: Observation Telemetry (Left) + Environmental NDVI / LST Heatmap (Right) */}
-              <div style={{
-                display: 'grid',
-                gridTemplateColumns: 'minmax(300px, 1fr) minmax(0, 1.85fr)',
-                gap: '18px',
-                alignItems: 'stretch'
-              }}>
-                <ObservationTelemetry
-                  dataset={selectedDataset}
-                />
-                <EnvironmentalHeatmapAnalysis
-                  dataset={selectedDataset}
                 />
               </div>
             </>
