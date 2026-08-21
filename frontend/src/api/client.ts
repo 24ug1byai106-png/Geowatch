@@ -4,8 +4,8 @@ const API_BASE_URL = 'http://localhost:8000/api/v1';
 
 export const SENTINEL_2024_2026_DATASET: PresetDataset = {
   id: 'bengaluru-sentinel-2024-2026',
-  name: 'Bengaluru — Sentinel-2 L1C Observation (2024 vs 2026)',
-  region: 'Bengaluru Tech Corridor, Karnataka, India',
+  name: 'Bengaluru Metropolitan Corridor',
+  region: 'Bengaluru, Karnataka, India',
   regionType: 'Metropolitan & Infrastructure Expansion',
   dataSource: 'Sentinel-2B MSI (Tile T43PGQ)',
   coordinates: [12.9716, 77.5946],
