@@ -194,9 +194,10 @@ export const App: React.FC = () => {
           {/* SCREEN 1: MAIN ANALYSIS SCREEN */}
           {activeScreen === 'analysis' && (
             <>
-              {/* Hero Banner & Status */}
+              {/* Hero Banner with Satellite Video Background */}
               <HeroStatus
-                isProcessing={false}
+                onStartNewAnalysis={() => setIsAnalysisModalOpen(true)}
+                onExploreMonitoring={() => setActiveScreen('monitoring')}
               />
 
               {/* Top Section: Temporal Analysis (Left) + Detection Results (Right) */}
