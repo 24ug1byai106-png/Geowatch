@@ -85,31 +85,37 @@ export const App: React.FC = () => {
     checkConnection();
   }, []);
 
-  // Perform initial real image differencing on load
-  useEffect(() => {
-    const initAnalysis = async () => {
-      try {
-        const result = await performImageChangeDetection(
-          SENTINEL_2024_2026_DATASET.beforeImage,
-          SENTINEL_2024_2026_DATASET.afterImage,
-          38
-        );
-        const updatedDataset = {
-          ...SENTINEL_2024_2026_DATASET,
-          analysisResult: result
-        };
-        setSelectedDataset(updatedDataset);
-        const derivedAlerts = generateGovernmentAlertsFromDataset(updatedDataset);
-        setAlerts(derivedAlerts);
+  const [isAnalyzing, setIsAnalyzing] = useState<boolean>(false);
 
-        addLog(`Completed pixel differencing for Sentinel-2 2024 vs 2026: detected ${result.totalChangeRegions} change regions (${result.changedAreaPercentage}% area modified).`, 'success');
-        addLog(`Generated ${derivedAlerts.length} government monitoring alerts requiring field review.`, 'info');
-      } catch (err) {
-        console.error('Initial analysis error', err);
-      }
-    };
-    initAnalysis();
-  }, []);
+  const handleRunAnalysis = async (targetDataset: PresetDataset = selectedDataset) => {
+    try {
+      setIsAnalyzing(true);
+      addLog(`Initiating multi-spectral differencing for ${targetDataset.name}...`, 'info');
+      
+      const result = await performImageChangeDetection(
+        targetDataset.beforeImage,
+        targetDataset.afterImage,
+        38
+      );
+
+      const updatedDataset: PresetDataset = {
+        ...targetDataset,
+        analysisResult: result
+      };
+
+      setSelectedDataset(updatedDataset);
+      const derivedAlerts = generateGovernmentAlertsFromDataset(updatedDataset);
+      setAlerts(derivedAlerts);
+
+      addLog(`Completed pixel differencing for ${targetDataset.name}: detected ${result.totalChangeRegions} change regions (${result.changedAreaPercentage}% area modified).`, 'success');
+      addLog(`Generated ${derivedAlerts.length} government monitoring alerts requiring field review.`, 'info');
+      setIsAnalyzing(false);
+    } catch (err) {
+      console.error('Analysis execution error:', err);
+      setIsAnalyzing(false);
+      addLog('Encountered an issue during image differencing pipeline.', 'error');
+    }
+  };
 
   const handleUpdateAlertStatus = (alertId: string, newStatus: GovernmentAlertStatus) => {
     setAlerts(prev => prev.map(a => a.id === alertId ? { ...a, status: newStatus } : a));
@@ -237,6 +243,8 @@ export const App: React.FC = () => {
                 <DetectionResults
                   dataset={selectedDataset}
                   onDownloadReport={handleDownloadReport}
+                  onRunAnalysis={() => handleRunAnalysis(selectedDataset)}
+                  isAnalyzing={isAnalyzing}
                 />
               </div>
 
@@ -323,7 +331,10 @@ export const App: React.FC = () => {
         onClose={() => setIsAnalysisModalOpen(false)}
         onSelectDataset={(ds) => {
           setSelectedDataset(ds);
-          addLog(`Updated observation dataset: ${ds.name}`, 'info');
+          if (ds.analysisResult) {
+            setAlerts(generateGovernmentAlertsFromDataset(ds));
+          }
+          addLog(`Observation dataset loaded: ${ds.name}`, 'info');
         }}
         onLog={addLog}
       />

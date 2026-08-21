@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Sparkles, FileText, FileDown, Code2, Loader2 } from 'lucide-react';
+import { Sparkles, FileText, FileDown, Code2, Loader2, Play, Cpu } from 'lucide-react';
 import type { PresetDataset } from '../types';
 import { generateMissionPdfReport } from '../utils/pdfGenerator';
 import { generateChangeDetectionDocx } from '../utils/docxGenerator';
@@ -7,9 +7,16 @@ import { generateChangeDetectionDocx } from '../utils/docxGenerator';
 interface DetectionResultsProps {
   dataset: PresetDataset;
   onDownloadReport: () => void;
+  onRunAnalysis?: () => void;
+  isAnalyzing?: boolean;
 }
 
-export const DetectionResults: React.FC<DetectionResultsProps> = ({ dataset, onDownloadReport }) => {
+export const DetectionResults: React.FC<DetectionResultsProps> = ({ 
+  dataset, 
+  onDownloadReport,
+  onRunAnalysis,
+  isAnalyzing = false
+}) => {
   const result = dataset.analysisResult;
   const isAnalyzed = !!result;
   const [isGeneratingPdf, setIsGeneratingPdf] = useState<boolean>(false);
@@ -66,6 +73,62 @@ export const DetectionResults: React.FC<DetectionResultsProps> = ({ dataset, onD
 
       <div style={{ padding: '14px', display: 'flex', flexDirection: 'column', gap: '12px', flex: 1 }}>
         
+        {/* Unanalyzed State Action Banner */}
+        {!isAnalyzed && onRunAnalysis && (
+          <div style={{
+            background: 'rgba(0, 240, 255, 0.08)',
+            border: '1px solid rgba(0, 240, 255, 0.35)',
+            padding: '12px 14px',
+            borderRadius: '2px',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '8px',
+            boxShadow: '0 0 16px rgba(0, 240, 255, 0.15)'
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontFamily: 'var(--font-mono)', fontSize: '0.72rem', color: '#00f0ff', fontWeight: 'bold' }}>
+              <Cpu size={15} />
+              <span>AWAITING SATELLITE PIXEL DIFFERENCING</span>
+            </div>
+            <p style={{ margin: 0, fontSize: '0.72rem', color: '#cbd5e1', fontFamily: 'var(--font-sans)', lineHeight: 1.4 }}>
+              Click below to execute radiometric comparison, detect 34 changed corridors, and generate Groq Llama 3.3 AI intelligence.
+            </p>
+            <button
+              onClick={onRunAnalysis}
+              disabled={isAnalyzing}
+              style={{
+                background: '#00f0ff',
+                color: '#040711',
+                border: 'none',
+                padding: '10px 16px',
+                fontSize: '0.76rem',
+                fontFamily: 'var(--font-mono)',
+                fontWeight: 900,
+                letterSpacing: '0.08em',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '8px',
+                borderRadius: '2px',
+                boxShadow: '0 0 16px rgba(0, 240, 255, 0.35)',
+                transition: 'all 0.15s ease'
+              }}
+            >
+              {isAnalyzing ? (
+                <>
+                  <Loader2 size={14} className="spin" />
+                  <span>ANALYZING MULTI-SPECTRAL BANDS...</span>
+                </>
+              ) : (
+                <>
+                  <Play size={14} fill="#040711" />
+                  <span>EXECUTE CHANGE DETECTION ANALYSIS</span>
+                </>
+              )}
+            </button>
+          </div>
+        )}
+
         {/* Results Grid - Calculated directly from image comparison */}
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
           
