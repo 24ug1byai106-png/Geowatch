@@ -242,7 +242,6 @@ export const ChangeMapView: React.FC<ChangeMapViewProps> = ({ dataset, onSelectO
                 ];
 
                 const isBuilding = region.category === 'structure';
-                const isTree = region.category === 'vegetation';
 
                 return (
                   <React.Fragment key={region.id}>
@@ -254,10 +253,10 @@ export const ChangeMapView: React.FC<ChangeMapViewProps> = ({ dataset, onSelectO
                       }}
                       pathOptions={{
                         color: region.color,
-                        weight: isBuilding ? 2 : 2.5,
+                        weight: 1.5,
                         fillColor: region.color,
-                        fillOpacity: 0.15,
-                        dashArray: isBuilding ? '5, 3' : isTree ? '2, 3' : undefined
+                        fillOpacity: 0.04,
+                        dashArray: isBuilding ? '4, 4' : undefined
                       }}
                     >
                       <Popup>
