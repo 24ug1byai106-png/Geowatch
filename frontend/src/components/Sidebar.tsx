@@ -3,7 +3,6 @@ import {
   Globe, 
   Layers, 
   Sparkles, 
-  Database, 
   BarChart3, 
   HelpCircle, 
   History,
@@ -35,8 +34,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
     { id: 'analysis', label: 'MISSION ANALYSIS', sublabel: 'Before / After Differencing', symbol: '◈', icon: Layers },
     { id: 'change_map', label: 'CHANGE MAP', sublabel: 'Geographic Polygons', symbol: '◉', icon: Globe },
     { id: 'monitoring', label: 'GOVERNMENT ALERTS', sublabel: 'Field Verification Queue', symbol: '🛡️', icon: ShieldAlert, badge: alertCount > 0 ? alertCount : undefined },
-    { id: 'government', label: 'CIVIC AUDIT', sublabel: 'Roads, Buildings & Taxes', symbol: '🏛️', icon: Sparkles },
-    { id: 'geo_data', label: 'EXPORT DATA', sublabel: 'Polygons & GeoJSON', symbol: '◇', icon: Database },
+    { id: 'government', label: 'CIVIC AUDIT', sublabel: 'Roads, Buildings & Trees Report', symbol: '🏛️', icon: Sparkles },
     { id: 'analytics', label: 'TIMELINE', sublabel: 'Multi-Year History', symbol: '▣', icon: BarChart3 },
   ];
 
