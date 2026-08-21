@@ -10,7 +10,8 @@ import {
   WidthType, 
   AlignmentType 
 } from 'docx';
-import type { PresetDataset } from '../types';
+import type { PresetDataset, GovernmentAlert } from '../types';
+import { generateGovernmentAlertsFromDataset } from './alertGenerator';
 
 /**
  * Generates a formal Microsoft Word (.docx) Earth Change Detection Report
@@ -203,11 +204,123 @@ export async function generateChangeDetectionDocx(dataset: PresetDataset): Promi
           }),
           new Paragraph({ text: "" }),
 
-          // Section 4: Statutory Legal Disclaimer
+          // Section 4: Itemized Roadway & Transportation Corridor Additions
           new Paragraph({
-            text: "4. Statutory Legal Notice",
+            text: "4. Itemized Roadway & Transportation Corridor Expansions",
             heading: HeadingLevel.HEADING_1
           }),
+          new Paragraph({
+            children: [
+              new TextRun({
+                text: "The table below itemizes specific highway widenings, transit links, and asphalt road expansions identified via Sentinel-2 pixel differencing:",
+                italics: true,
+                color: "555555"
+              })
+            ]
+          }),
+          new Paragraph({ text: "" }),
+          new Table({
+            width: { size: 100, type: WidthType.PERCENTAGE },
+            rows: [
+              new TableRow({
+                children: [
+                  new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: "Alert ID", bold: true })] })], width: { size: 15, type: WidthType.PERCENTAGE } }),
+                  new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: "Identified Sector & Location", bold: true })] })], width: { size: 30, type: WidthType.PERCENTAGE } }),
+                  new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: "Footprint", bold: true })] })], width: { size: 15, type: WidthType.PERCENTAGE } }),
+                  new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: "Primary Driver & Cause", bold: true })] })], width: { size: 40, type: WidthType.PERCENTAGE } })
+                ]
+              }),
+              ...generateGovernmentAlertsFromDataset(dataset)
+                .filter((a: GovernmentAlert) => a.category === 'Potential Road Expansion')
+                .slice(0, 10)
+                .map((a: GovernmentAlert) => new TableRow({
+                  children: [
+                    new TableCell({ children: [new Paragraph(a.id)] }),
+                    new TableCell({ children: [new Paragraph(a.specificLocation || a.location)] }),
+                    new TableCell({ children: [new Paragraph(`${a.affectedAreaSqm.toLocaleString()} m²`)] }),
+                    new TableCell({ children: [new Paragraph(a.driverCause || a.description)] })
+                  ]
+                }))
+            ]
+          }),
+          new Paragraph({ text: "" }),
+
+          // Section 5: Itemized Structural & Building Footprint Additions
+          new Paragraph({
+            text: "5. Itemized Structural & Building Footprint Additions",
+            heading: HeadingLevel.HEADING_1
+          }),
+          new Table({
+            width: { size: 100, type: WidthType.PERCENTAGE },
+            rows: [
+              new TableRow({
+                children: [
+                  new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: "Alert ID", bold: true })] })], width: { size: 15, type: WidthType.PERCENTAGE } }),
+                  new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: "Identified Sector & Location", bold: true })] })], width: { size: 30, type: WidthType.PERCENTAGE } }),
+                  new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: "Built-Up Footprint", bold: true })] })], width: { size: 15, type: WidthType.PERCENTAGE } }),
+                  new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: "Primary Driver & Cause", bold: true })] })], width: { size: 40, type: WidthType.PERCENTAGE } })
+                ]
+              }),
+              ...generateGovernmentAlertsFromDataset(dataset)
+                .filter((a: GovernmentAlert) => a.category === 'Potential Unauthorized Construction')
+                .slice(0, 10)
+                .map((a: GovernmentAlert) => new TableRow({
+                  children: [
+                    new TableCell({ children: [new Paragraph(a.id)] }),
+                    new TableCell({ children: [new Paragraph(a.specificLocation || a.location)] }),
+                    new TableCell({ children: [new Paragraph(`${a.affectedAreaSqm.toLocaleString()} m²`)] }),
+                    new TableCell({ children: [new Paragraph(a.driverCause || a.description)] })
+                  ]
+                }))
+            ]
+          }),
+          new Paragraph({ text: "" }),
+
+          // Section 6: Itemized Ecological Impact & Tree Loss
+          new Paragraph({
+            text: "6. Itemized Ecological Impact & Tree Canopy Clearance",
+            heading: HeadingLevel.HEADING_1
+          }),
+          new Table({
+            width: { size: 100, type: WidthType.PERCENTAGE },
+            rows: [
+              new TableRow({
+                children: [
+                  new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: "Alert ID", bold: true })] })], width: { size: 15, type: WidthType.PERCENTAGE } }),
+                  new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: "Catchment & Sector", bold: true })] })], width: { size: 30, type: WidthType.PERCENTAGE } }),
+                  new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: "Canopy Cleared", bold: true })] })], width: { size: 15, type: WidthType.PERCENTAGE } }),
+                  new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: "Environmental & Water Impact", bold: true })] })], width: { size: 40, type: WidthType.PERCENTAGE } })
+                ]
+              }),
+              ...generateGovernmentAlertsFromDataset(dataset)
+                .filter((a: GovernmentAlert) => a.category === 'Vegetation Clearing')
+                .slice(0, 10)
+                .map((a: GovernmentAlert) => new TableRow({
+                  children: [
+                    new TableCell({ children: [new Paragraph(a.id)] }),
+                    new TableCell({ children: [new Paragraph(a.specificLocation || a.location)] }),
+                    new TableCell({ children: [new Paragraph(`${a.affectedAreaSqm.toLocaleString()} m²`)] }),
+                    new TableCell({ children: [new Paragraph(a.civicImpactEffects || a.observedChange)] })
+                  ]
+                }))
+            ]
+          }),
+          new Paragraph({ text: "" }),
+
+          // Section 7: Statutory Legal Disclaimer
+          new Paragraph({
+            text: "7. Statutory Departmental Action Protocol & Legal Notice",
+            heading: HeadingLevel.HEADING_1
+          }),
+          new Paragraph({
+            children: [
+              new TextRun({
+                text: "• Urban Planning Authorities (BBMP / BDA): Cross-reference identified structural additions against approved master plan sanction orders.\n• Forest & Ecology Department: Mandate 1:10 compensatory afforestation for all flagged canopy clearings.\n• Public Works Department (PWD): Verify Right-of-Way setbacks along newly widened transportation links.",
+                color: "333333"
+              })
+            ]
+          }),
+          new Paragraph({ text: "" }),
           new Paragraph({
             children: [
               new TextRun({
@@ -222,7 +335,7 @@ export async function generateChangeDetectionDocx(dataset: PresetDataset): Promi
           new Paragraph({
             children: [
               new TextRun({
-                text: `Report generated on ${new Date().toLocaleString('en-IN')} | Copernicus Sentinel Data Attribution`,
+                text: `Official Government Dossier generated on ${new Date().toLocaleString('en-IN')} | Copernicus Sentinel Data Attribution`,
                 size: 16,
                 color: "888888"
               })
