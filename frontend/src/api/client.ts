@@ -2,6 +2,22 @@ import type { AnalysisJob, GeoJsonCollection, AnalysisExplanation, PresetDataset
 
 const API_BASE_URL = 'http://localhost:8000/api/v1';
 
+export const EMPTY_SATELLITE_DATASET: PresetDataset = {
+  id: 'custom-satellite-pair',
+  name: 'Satellite Observation AOI',
+  region: 'User Defined AOI',
+  regionType: 'Multi-Temporal Observation',
+  dataSource: 'User Ingested Imagery',
+  coordinates: [12.9716, 77.5946],
+  beforeYear: 'T0 (Baseline)',
+  afterYear: 'T1 (Observation)',
+  beforeImage: '',
+  afterImage: '',
+  beforeTifName: '',
+  afterTifName: '',
+  analysisResult: null
+};
+
 export const SENTINEL_2024_2026_DATASET: PresetDataset = {
   id: 'bengaluru-sentinel-2024-2026',
   name: 'Bengaluru Metropolitan Corridor',

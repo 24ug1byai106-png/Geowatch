@@ -24,57 +24,82 @@ export const TemporalAnalysis: React.FC<TemporalAnalysisProps> = ({
   const [activeCategoryFilter, setActiveCategoryFilter] = useState<'structure' | 'vegetation' | 'high_intensity' | null>(null);
   const [isHoveringObject, setIsHoveringObject] = useState<string | null>(null);
 
-  // File upload drawer / state
+  // File upload state
   const [isUploading, setIsUploading] = useState<boolean>(false);
-  const [beforeFileName, setBeforeFileName] = useState<string>('');
-  const [afterFileName, setAfterFileName] = useState<string>('');
 
   const beforeInputRef = useRef<HTMLInputElement>(null);
   const afterInputRef = useRef<HTMLInputElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
-  const handleUploadBefore = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+  // Dragging states
+  const [isDraggingBefore, setIsDraggingBefore] = useState<boolean>(false);
+  const [isDraggingAfter, setIsDraggingAfter] = useState<boolean>(false);
+
+  const handleProcessBeforeFile = async (file: File) => {
     try {
       setIsUploading(true);
       const decoded = await decodeUploadedFile(file);
-      setBeforeFileName(file.name);
       const updated: PresetDataset = {
         ...dataset,
         beforeImage: decoded.dataUrl,
         beforeTifName: file.name,
         beforeYear: 'T0 (Baseline)',
-        analysisResult: null // Reset analysis so it computes fresh on the new photo
+        analysisResult: null
       };
       if (onUpdateDataset) onUpdateDataset(updated);
     } catch (err) {
-      console.error('Error uploading before image:', err);
+      console.error('Error processing before file:', err);
     } finally {
       setIsUploading(false);
     }
   };
 
-  const handleUploadAfter = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+  const handleProcessAfterFile = async (file: File) => {
     try {
       setIsUploading(true);
       const decoded = await decodeUploadedFile(file);
-      setAfterFileName(file.name);
       const updated: PresetDataset = {
         ...dataset,
         afterImage: decoded.dataUrl,
         afterTifName: file.name,
         afterYear: 'T1 (Observation)',
-        analysisResult: null // Reset analysis so it computes fresh on the new photo
+        analysisResult: null
       };
       if (onUpdateDataset) onUpdateDataset(updated);
     } catch (err) {
-      console.error('Error uploading after image:', err);
+      console.error('Error processing after file:', err);
     } finally {
       setIsUploading(false);
     }
+  };
+
+  const handleUploadBefore = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) handleProcessBeforeFile(file);
+  };
+
+  const handleUploadAfter = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) handleProcessAfterFile(file);
+  };
+
+  const handleLoadSampleDataset = () => {
+    const sample: PresetDataset = {
+      id: 'bengaluru-sentinel-2024-2026',
+      name: 'Bengaluru Metropolitan Corridor',
+      region: 'Bengaluru, Karnataka, India',
+      regionType: 'Metropolitan & Infrastructure Expansion',
+      dataSource: 'Sentinel-2B MSI (Tile T43PGQ)',
+      coordinates: [12.9716, 77.5946],
+      beforeYear: '2024',
+      afterYear: '2026',
+      beforeImage: '/data/sentinel_2024_bengaluru.png',
+      afterImage: '/data/sentinel_2026_bengaluru.png',
+      beforeTifName: 'S2B_20241208_T43PGQ.jp2',
+      afterTifName: 'S2B_20260512_T43PGQ.jp2',
+      analysisResult: null
+    };
+    if (onUpdateDataset) onUpdateDataset(sample);
   };
 
   const handleSwipeMove = (e: React.MouseEvent<HTMLDivElement> | React.TouchEvent<HTMLDivElement>) => {
@@ -88,10 +113,11 @@ export const TemporalAnalysis: React.FC<TemporalAnalysisProps> = ({
 
   const analysis = dataset.analysisResult;
   const rawRegions = analysis?.regions || [];
-  // Only show regions if a category is actively clicked/selected
   const changeRegions = activeCategoryFilter
     ? rawRegions.filter(r => r.category === activeCategoryFilter)
     : [];
+
+  const hasBothImages = !!(dataset.beforeImage && dataset.afterImage);
 
   return (
     <div className="hud-panel" style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
@@ -100,34 +126,36 @@ export const TemporalAnalysis: React.FC<TemporalAnalysisProps> = ({
       <div className="hud-header" style={{ justifyContent: 'space-between', flexWrap: 'wrap', gap: '8px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
           <span className="led-amber" />
-          <span>TEMPORAL CHANGE ANALYSIS // {dataset.beforeYear} VS {dataset.afterYear}</span>
+          <span>TEMPORAL CHANGE ANALYSIS // {dataset.beforeYear || 'T0'} VS {dataset.afterYear || 'T1'}</span>
         </div>
 
         {/* View Mode Switcher */}
-        <div style={{ display: 'flex', gap: '4px' }}>
-          {(['SPLIT VIEW', 'SWIPE', 'OVERLAY', 'CHANGE MAP'] as const).map((mode) => {
-            const isActive = viewMode === mode;
-            return (
-              <button
-                key={mode}
-                onClick={() => setViewMode(mode)}
-                style={{
-                  background: isActive ? 'var(--accent-amber)' : 'transparent',
-                  color: isActive ? '#07090e' : 'var(--text-dim)',
-                  border: '1px solid ' + (isActive ? 'var(--accent-amber)' : 'var(--border-dim)'),
-                  padding: '3px 8px',
-                  fontSize: '0.65rem',
-                  fontFamily: 'var(--font-mono)',
-                  fontWeight: isActive ? 700 : 500,
-                  cursor: 'pointer',
-                  transition: 'all 0.15s ease'
-                }}
-              >
-                {mode}
-              </button>
-            );
-          })}
-        </div>
+        {hasBothImages && (
+          <div style={{ display: 'flex', gap: '4px' }}>
+            {(['SPLIT VIEW', 'SWIPE', 'OVERLAY', 'CHANGE MAP'] as const).map((mode) => {
+              const isActive = viewMode === mode;
+              return (
+                <button
+                  key={mode}
+                  onClick={() => setViewMode(mode)}
+                  style={{
+                    background: isActive ? 'var(--accent-amber)' : 'transparent',
+                    color: isActive ? '#07090e' : 'var(--text-dim)',
+                    border: '1px solid ' + (isActive ? 'var(--accent-amber)' : 'var(--border-dim)'),
+                    padding: '3px 8px',
+                    fontSize: '0.65rem',
+                    fontFamily: 'var(--font-mono)',
+                    fontWeight: isActive ? 700 : 500,
+                    cursor: 'pointer',
+                    transition: 'all 0.15s ease'
+                  }}
+                >
+                  {mode}
+                </button>
+              );
+            })}
+          </div>
+        )}
       </div>
 
       {/* DIRECT SATELLITE PHOTO INGESTION BAR */}
@@ -146,10 +174,10 @@ export const TemporalAnalysis: React.FC<TemporalAnalysisProps> = ({
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
           <div style={{ fontSize: '0.68rem', fontFamily: 'var(--font-mono)', color: 'var(--accent-amber)', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '6px' }}>
             <Upload size={13} />
-            <span>PROVIDE SATELLITE PHOTOS:</span>
+            <span>INGEST SATELLITE PHOTOS:</span>
           </div>
 
-          {/* Hidden Native File Inputs (Accepts GeoTIFF, JP2, PNG, JPG, ZIP) */}
+          {/* Hidden Native File Inputs */}
           <input 
             type="file" 
             ref={beforeInputRef} 
@@ -170,9 +198,9 @@ export const TemporalAnalysis: React.FC<TemporalAnalysisProps> = ({
             onClick={() => beforeInputRef.current?.click()}
             disabled={isUploading}
             style={{
-              background: beforeFileName ? 'rgba(0, 240, 255, 0.15)' : 'rgba(255, 255, 255, 0.06)',
-              border: `1px solid ${beforeFileName ? '#00f0ff' : 'var(--border-dim)'}`,
-              color: beforeFileName ? '#00f0ff' : '#cbd5e1',
+              background: dataset.beforeImage ? 'rgba(0, 240, 255, 0.15)' : 'rgba(255, 255, 255, 0.06)',
+              border: `1px solid ${dataset.beforeImage ? '#00f0ff' : 'var(--border-dim)'}`,
+              color: dataset.beforeImage ? '#00f0ff' : '#cbd5e1',
               padding: '5px 10px',
               fontSize: '0.68rem',
               fontFamily: 'var(--font-mono)',
@@ -184,7 +212,7 @@ export const TemporalAnalysis: React.FC<TemporalAnalysisProps> = ({
             }}
           >
             <ImagePlus size={13} />
-            <span>{beforeFileName ? `T0: ${beforeFileName.slice(0, 16)}...` : '📁 Upload Before Photo (T0)'}</span>
+            <span>{dataset.beforeImage ? '✓ T0 Photo Ingested' : '📁 Upload Before Photo (T0)'}</span>
           </button>
 
           {/* Upload After (T1) */}
@@ -192,9 +220,9 @@ export const TemporalAnalysis: React.FC<TemporalAnalysisProps> = ({
             onClick={() => afterInputRef.current?.click()}
             disabled={isUploading}
             style={{
-              background: afterFileName ? 'rgba(255, 153, 0, 0.15)' : 'rgba(255, 255, 255, 0.06)',
-              border: `1px solid ${afterFileName ? 'var(--accent-amber)' : 'var(--border-dim)'}`,
-              color: afterFileName ? 'var(--accent-amber)' : '#cbd5e1',
+              background: dataset.afterImage ? 'rgba(255, 153, 0, 0.15)' : 'rgba(255, 255, 255, 0.06)',
+              border: `1px solid ${dataset.afterImage ? 'var(--accent-amber)' : 'var(--border-dim)'}`,
+              color: dataset.afterImage ? 'var(--accent-amber)' : '#cbd5e1',
               padding: '5px 10px',
               fontSize: '0.68rem',
               fontFamily: 'var(--font-mono)',
@@ -206,46 +234,66 @@ export const TemporalAnalysis: React.FC<TemporalAnalysisProps> = ({
             }}
           >
             <ImagePlus size={13} />
-            <span>{afterFileName ? `T1: ${afterFileName.slice(0, 16)}...` : '📁 Upload After Photo (T1)'}</span>
+            <span>{dataset.afterImage ? '✓ T1 Photo Ingested' : '📁 Upload After Photo (T1)'}</span>
           </button>
         </div>
 
-        {/* Instant Run Analysis Button */}
-        {onTriggerAnalysis && (
-          <button
-            onClick={() => onTriggerAnalysis(dataset)}
-            disabled={isAnalyzing || isUploading}
-            style={{
-              background: '#00f0ff',
-              color: '#040711',
-              border: 'none',
-              padding: '6px 14px',
-              fontSize: '0.72rem',
-              fontFamily: 'var(--font-mono)',
-              fontWeight: 900,
-              letterSpacing: '0.06em',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '6px',
-              borderRadius: '2px',
-              boxShadow: '0 0 12px rgba(0, 240, 255, 0.35)',
-              transition: 'all 0.15s ease'
-            }}
-          >
-            {isAnalyzing ? (
-              <>
-                <Loader2 size={13} className="spin" />
-                <span>PROCESSING...</span>
-              </>
-            ) : (
-              <>
-                <Play size={13} fill="#040711" />
-                <span>ANALYZE PHOTOS</span>
-              </>
-            )}
-          </button>
-        )}
+        {/* Action button if both present */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          {!hasBothImages && (
+            <button
+              onClick={handleLoadSampleDataset}
+              style={{
+                background: 'rgba(255, 255, 255, 0.06)',
+                color: '#94a3b8',
+                border: '1px solid var(--border-dim)',
+                padding: '5px 10px',
+                fontSize: '0.65rem',
+                fontFamily: 'var(--font-mono)',
+                cursor: 'pointer',
+                borderRadius: '2px'
+              }}
+            >
+              ⚡ Load Sample Observation Pair
+            </button>
+          )}
+
+          {hasBothImages && onTriggerAnalysis && (
+            <button
+              onClick={() => onTriggerAnalysis(dataset)}
+              disabled={isAnalyzing || isUploading}
+              style={{
+                background: '#00f0ff',
+                color: '#040711',
+                border: 'none',
+                padding: '6px 14px',
+                fontSize: '0.72rem',
+                fontFamily: 'var(--font-mono)',
+                fontWeight: 900,
+                letterSpacing: '0.06em',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+                borderRadius: '2px',
+                boxShadow: '0 0 12px rgba(0, 240, 255, 0.35)',
+                transition: 'all 0.15s ease'
+              }}
+            >
+              {isAnalyzing ? (
+                <>
+                  <Loader2 size={13} className="spin" />
+                  <span>ANALYZING PIXELS...</span>
+                </>
+              ) : (
+                <>
+                  <Play size={13} fill="#040711" />
+                  <span>ANALYZE PHOTOS</span>
+                </>
+              )}
+            </button>
+          )}
+        </div>
 
       </div>
 
@@ -253,7 +301,7 @@ export const TemporalAnalysis: React.FC<TemporalAnalysisProps> = ({
       <div style={{ padding: '12px', flex: 1, display: 'flex', flexDirection: 'column', gap: '8px' }}>
         
         {/* Opacity slider for OVERLAY mode */}
-        {viewMode === 'OVERLAY' && (
+        {hasBothImages && viewMode === 'OVERLAY' && (
           <div style={{
             display: 'flex',
             alignItems: 'center',
@@ -264,7 +312,7 @@ export const TemporalAnalysis: React.FC<TemporalAnalysisProps> = ({
             fontSize: '0.7rem',
             fontFamily: 'var(--font-mono)'
           }}>
-            <span style={{ color: 'var(--text-dim)' }}>{dataset.beforeYear} BASELINE</span>
+            <span style={{ color: 'var(--text-dim)' }}>{dataset.beforeYear || 'T0'} BASELINE</span>
             <input
               type="range"
               min="0"
@@ -274,7 +322,7 @@ export const TemporalAnalysis: React.FC<TemporalAnalysisProps> = ({
               style={{ flex: 1, accentColor: 'var(--accent-amber)', cursor: 'pointer' }}
             />
             <span style={{ color: 'var(--accent-amber)', fontWeight: 'bold' }}>
-              {dataset.afterYear} COMPARISON ({overlayOpacity}%)
+              {dataset.afterYear || 'T1'} COMPARISON ({overlayOpacity}%)
             </span>
           </div>
         )}
@@ -282,8 +330,8 @@ export const TemporalAnalysis: React.FC<TemporalAnalysisProps> = ({
         {/* Dynamic Visualizer Canvas Container */}
         <div
           ref={containerRef}
-          onMouseMove={viewMode === 'SWIPE' ? handleSwipeMove : undefined}
-          onTouchMove={viewMode === 'SWIPE' ? handleSwipeMove : undefined}
+          onMouseMove={viewMode === 'SWIPE' && hasBothImages ? handleSwipeMove : undefined}
+          onTouchMove={viewMode === 'SWIPE' && hasBothImages ? handleSwipeMove : undefined}
           style={{
             position: 'relative',
             flex: 1,
@@ -294,8 +342,133 @@ export const TemporalAnalysis: React.FC<TemporalAnalysisProps> = ({
             userSelect: 'none'
           }}
         >
-          {/* MODE 1: SPLIT VIEW */}
-          {viewMode === 'SPLIT VIEW' && (
+          {/* STATE A: AWAITING BOTH SATELLITE PHOTOS (Clean Dropzones) */}
+          {!hasBothImages && (
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: '1fr 1fr',
+              gap: '14px',
+              padding: '20px',
+              height: '100%',
+              minHeight: '340px',
+              boxSizing: 'border-box'
+            }}>
+              
+              {/* Box 1: Before Satellite Image (T0) */}
+              <div
+                onClick={() => beforeInputRef.current?.click()}
+                onDragOver={(e) => { e.preventDefault(); setIsDraggingBefore(true); }}
+                onDragLeave={() => setIsDraggingBefore(false)}
+                onDrop={(e) => {
+                  e.preventDefault();
+                  setIsDraggingBefore(false);
+                  const file = e.dataTransfer.files?.[0];
+                  if (file) handleProcessBeforeFile(file);
+                }}
+                style={{
+                  border: `2px dashed ${dataset.beforeImage ? '#00f0ff' : (isDraggingBefore ? 'var(--accent-amber)' : 'rgba(0, 240, 255, 0.4)')}`,
+                  background: dataset.beforeImage ? 'rgba(0, 240, 255, 0.05)' : 'rgba(6, 11, 22, 0.8)',
+                  borderRadius: '4px',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '12px',
+                  padding: '20px',
+                  cursor: 'pointer',
+                  textAlign: 'center',
+                  position: 'relative',
+                  overflow: 'hidden',
+                  transition: 'all 0.2s ease'
+                }}
+              >
+                {dataset.beforeImage ? (
+                  <>
+                    <img src={dataset.beforeImage} alt="Before Preview" style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', objectFit: 'cover', opacity: 0.75 }} />
+                    <div style={{ position: 'relative', zIndex: 2, background: 'rgba(4, 7, 16, 0.9)', padding: '6px 12px', borderRadius: '3px', border: '1px solid #00f0ff', fontFamily: 'var(--font-mono)', fontSize: '0.72rem', color: '#00f0ff', fontWeight: 'bold' }}>
+                      ✓ BEFORE PHOTO (T0) LOADED
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <div style={{ width: '48px', height: '48px', borderRadius: '50%', background: 'rgba(0, 240, 255, 0.1)', border: '1px solid rgba(0, 240, 255, 0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      <Upload size={22} color="#00f0ff" />
+                    </div>
+                    <div>
+                      <div style={{ fontFamily: 'var(--font-tech)', fontSize: '1.05rem', fontWeight: 800, color: '#ffffff', letterSpacing: '0.04em' }}>
+                        BEFORE SATELLITE PHOTO (T0)
+                      </div>
+                      <div style={{ fontSize: '0.72rem', color: 'var(--text-dim)', fontFamily: 'var(--font-mono)', marginTop: '4px' }}>
+                        Drag & Drop or Click to Ingest Baseline Image
+                      </div>
+                    </div>
+                    <div style={{ fontSize: '0.62rem', color: '#94a3b8', fontFamily: 'var(--font-mono)', background: 'rgba(255, 255, 255, 0.05)', padding: '3px 8px', borderRadius: '2px' }}>
+                      GeoTIFF (.tif), JP2, PNG, JPG, ZIP
+                    </div>
+                  </>
+                )}
+              </div>
+
+              {/* Box 2: After Satellite Image (T1) */}
+              <div
+                onClick={() => afterInputRef.current?.click()}
+                onDragOver={(e) => { e.preventDefault(); setIsDraggingAfter(true); }}
+                onDragLeave={() => setIsDraggingAfter(false)}
+                onDrop={(e) => {
+                  e.preventDefault();
+                  setIsDraggingAfter(false);
+                  const file = e.dataTransfer.files?.[0];
+                  if (file) handleProcessAfterFile(file);
+                }}
+                style={{
+                  border: `2px dashed ${dataset.afterImage ? 'var(--accent-amber)' : (isDraggingAfter ? '#00f0ff' : 'rgba(255, 153, 0, 0.4)')}`,
+                  background: dataset.afterImage ? 'rgba(255, 153, 0, 0.05)' : 'rgba(6, 11, 22, 0.8)',
+                  borderRadius: '4px',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '12px',
+                  padding: '20px',
+                  cursor: 'pointer',
+                  textAlign: 'center',
+                  position: 'relative',
+                  overflow: 'hidden',
+                  transition: 'all 0.2s ease'
+                }}
+              >
+                {dataset.afterImage ? (
+                  <>
+                    <img src={dataset.afterImage} alt="After Preview" style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', objectFit: 'cover', opacity: 0.75 }} />
+                    <div style={{ position: 'relative', zIndex: 2, background: 'rgba(4, 7, 16, 0.9)', padding: '6px 12px', borderRadius: '3px', border: '1px solid var(--accent-amber)', fontFamily: 'var(--font-mono)', fontSize: '0.72rem', color: 'var(--accent-amber)', fontWeight: 'bold' }}>
+                      ✓ AFTER PHOTO (T1) LOADED
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <div style={{ width: '48px', height: '48px', borderRadius: '50%', background: 'rgba(255, 153, 0, 0.1)', border: '1px solid rgba(255, 153, 0, 0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      <Upload size={22} color="var(--accent-amber)" />
+                    </div>
+                    <div>
+                      <div style={{ fontFamily: 'var(--font-tech)', fontSize: '1.05rem', fontWeight: 800, color: '#ffffff', letterSpacing: '0.04em' }}>
+                        AFTER SATELLITE PHOTO (T1)
+                      </div>
+                      <div style={{ fontSize: '0.72rem', color: 'var(--text-dim)', fontFamily: 'var(--font-mono)', marginTop: '4px' }}>
+                        Drag & Drop or Click to Ingest Comparison Image
+                      </div>
+                    </div>
+                    <div style={{ fontSize: '0.62rem', color: '#94a3b8', fontFamily: 'var(--font-mono)', background: 'rgba(255, 255, 255, 0.05)', padding: '3px 8px', borderRadius: '2px' }}>
+                      GeoTIFF (.tif), JP2, PNG, JPG, ZIP
+                    </div>
+                  </>
+                )}
+              </div>
+
+            </div>
+          )}
+
+          {/* STATE B: BOTH SATELLITE PHOTOS INGESTED */}
+          {hasBothImages && viewMode === 'SPLIT VIEW' && (
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', height: '100%', gap: '2px', background: 'var(--border-dim)' }}>
               {/* Left: Baseline */}
               <div style={{ position: 'relative', height: '100%', overflow: 'hidden' }}>

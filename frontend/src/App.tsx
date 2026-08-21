@@ -18,7 +18,7 @@ import { LogsDrawer } from './components/LogsDrawer';
 import type { LogEntry } from './components/LogsDrawer';
 import { HelpModal } from './components/HelpModal';
 import { LandingHeroLogin } from './components/LandingHeroLogin';
-import { SENTINEL_2024_2026_DATASET, apiClient } from './api/client';
+import { EMPTY_SATELLITE_DATASET, apiClient } from './api/client';
 import { performImageChangeDetection } from './utils/imageProcessing';
 import { GovernmentMonitoringView } from './components/GovernmentMonitoringView';
 import { GovernmentAlertDetailModal } from './components/GovernmentAlertDetailModal';
@@ -32,7 +32,7 @@ export const App: React.FC = () => {
 
   // Screen state
   const [activeScreen, setActiveScreen] = useState<string>('analysis');
-  const [selectedDataset, setSelectedDataset] = useState<PresetDataset>(SENTINEL_2024_2026_DATASET);
+  const [selectedDataset, setSelectedDataset] = useState<PresetDataset>(EMPTY_SATELLITE_DATASET);
   const [selectedObject, setSelectedObject] = useState<CalculatedChangeRegion | null>(null);
   const [alerts, setAlerts] = useState<GovernmentAlert[]>([]);
   const [selectedAlert, setSelectedAlert] = useState<GovernmentAlert | null>(null);
