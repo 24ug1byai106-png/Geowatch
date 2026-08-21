@@ -88,7 +88,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
             letterSpacing: '0.04em',
             fontWeight: 'bold'
           }}>
-            GOVERNMENT EARTH OBSERVATION
+            CIVIC & GOVERNMENT ALERT SYSTEM
           </div>
         </div>
 

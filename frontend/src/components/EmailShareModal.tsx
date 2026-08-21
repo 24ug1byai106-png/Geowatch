@@ -35,7 +35,7 @@ Please find the attached satellite-based change detection report for your refere
 
 Regards,
 Hydra Positioning System
-Government Earth Observation Directorate`
+Satellite Intelligence & Civic Alert Network`
   );
 
   const [isSending, setIsSending] = useState<boolean>(false);

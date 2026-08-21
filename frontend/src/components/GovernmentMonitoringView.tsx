@@ -64,10 +64,10 @@ export const GovernmentMonitoringView: React.FC<GovernmentMonitoringViewProps> =
         <div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontFamily: 'var(--font-mono)', fontSize: '0.72rem', color: 'var(--accent-amber)' }}>
             <ShieldAlert size={16} />
-            <span>HYDRA POSITIONING SYSTEM // GOVERNMENT GEOSPATIAL MONITORING</span>
+            <span>HYDRA POSITIONING SYSTEM // SATELLITE SURVEILLANCE & CIVIC ALERT DISPATCH</span>
           </div>
           <h2 style={{ fontFamily: 'var(--font-tech)', fontSize: '1.4rem', color: '#fff', margin: '4px 0 0 0' }}>
-            GOVERNMENT MONITORING & FIELD ALERTS // {dataset.name.toUpperCase()}
+            CIVIC MONITORING & GOVERNMENT ALERTS // {dataset.name.toUpperCase()}
           </h2>
           <div style={{ fontSize: '0.68rem', color: 'var(--text-dim)', fontFamily: 'var(--font-mono)', marginTop: '3px' }}>
             Satellite-Based Change Observation & Civic Infrastructure Verification Queue
