@@ -1,11 +1,10 @@
 import React from 'react';
 
 interface HeroStatusProps {
-  currentRegionName: string;
   isProcessing: boolean;
 }
 
-export const HeroStatus: React.FC<HeroStatusProps> = ({ currentRegionName, isProcessing }) => {
+export const HeroStatus: React.FC<HeroStatusProps> = ({ isProcessing }) => {
   return (
     <div style={{
       display: 'grid',
@@ -28,7 +27,7 @@ export const HeroStatus: React.FC<HeroStatusProps> = ({ currentRegionName, isPro
           marginBottom: '6px'
         }}>
           <span className="led-amber" />
-          <span>LIVE ANALYSIS // HUMAN-ACTIVITY CHANGE MONITORING // {currentRegionName.toUpperCase()}</span>
+          <span>LIVE ANALYSIS // SATELLITE CHANGE DETECTION // MULTI-TEMPORAL OBSERVATION</span>
         </div>
 
         <h2 style={{
@@ -57,24 +56,25 @@ export const HeroStatus: React.FC<HeroStatusProps> = ({ currentRegionName, isPro
         </p>
       </div>
 
-      {/* Right: GeoWatch Status HUD Card */}
+      {/* Right: Hydra Positioning System Status HUD Card */}
       <div className="hud-panel" style={{ padding: '14px 18px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
         <div style={{
           fontFamily: 'var(--font-mono)',
           fontSize: '0.72rem',
           letterSpacing: '0.12em',
-          color: 'var(--accent-amber)',
-          borderBottom: '1px solid rgba(255, 153, 0, 0.2)',
+          color: '#00f0ff',
+          borderBottom: '1px solid rgba(0, 240, 255, 0.25)',
           paddingBottom: '5px',
-          textTransform: 'uppercase'
+          textTransform: 'uppercase',
+          fontWeight: 'bold'
         }}>
-          GEOWATCH STATUS
+          HYDRA SYSTEM STATUS
         </div>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', marginTop: '8px', fontSize: '0.78rem', fontFamily: 'var(--font-mono)' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-            <span style={{ color: 'var(--text-dim)' }}>PROJECT</span>
-            <span style={{ color: '#fff', fontWeight: 600 }}>GeoWatch</span>
+            <span style={{ color: 'var(--text-dim)' }}>PLATFORM</span>
+            <span style={{ color: '#00f0ff', fontWeight: 700 }}>Hydra Positioning System</span>
           </div>
 
           <div style={{ display: 'flex', justifyContent: 'space-between' }}>

@@ -196,7 +196,6 @@ export const App: React.FC = () => {
             <>
               {/* Hero Banner & Status */}
               <HeroStatus
-                currentRegionName={selectedDataset.name}
                 isProcessing={false}
               />
 

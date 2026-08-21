@@ -60,7 +60,7 @@ export const Navbar: React.FC<NavbarProps> = ({
               HYDRA POSITIONING SYSTEM
             </h1>
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '0.68rem', color: 'var(--text-dim)', fontFamily: 'var(--font-mono)', marginTop: '2px' }}>
-              <span style={{ color: 'var(--accent-amber)', letterSpacing: '0.06em', fontWeight: 'bold' }}>AI SATELLITE INTELLIGENCE & CIVIC ALERT SYSTEM</span>
+              <span style={{ color: 'var(--accent-amber)', letterSpacing: '0.06em', fontWeight: 'bold' }}>EARTH OBSERVATION & GEOSPATIAL INTELLIGENCE</span>
               <span>•</span>
               <span>IST: <strong style={{ color: '#fff' }}>{time}</strong></span>
               <span>•</span>
