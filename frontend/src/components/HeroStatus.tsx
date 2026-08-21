@@ -1,14 +1,12 @@
 import React from 'react';
-import { Plus, ShieldAlert } from 'lucide-react';
+import { Plus } from 'lucide-react';
 
 interface HeroStatusProps {
   onStartNewAnalysis?: () => void;
-  onExploreMonitoring?: () => void;
 }
 
 export const HeroStatus: React.FC<HeroStatusProps> = ({
-  onStartNewAnalysis,
-  onExploreMonitoring
+  onStartNewAnalysis
 }) => {
   return (
     <div 
@@ -119,7 +117,7 @@ export const HeroStatus: React.FC<HeroStatusProps> = ({
           Monitor satellite imagery, detect meaningful human-made changes, and generate actionable geospatial alerts.
         </p>
 
-        <div style={{ display: 'flex', gap: '12px', marginTop: '6px', flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', gap: '12px', marginTop: '6px' }}>
           {onStartNewAnalysis && (
             <button
               onClick={onStartNewAnalysis}
@@ -127,8 +125,8 @@ export const HeroStatus: React.FC<HeroStatusProps> = ({
                 background: '#00f0ff',
                 color: '#050811',
                 border: 'none',
-                padding: '9px 18px',
-                fontSize: '0.76rem',
+                padding: '10px 22px',
+                fontSize: '0.78rem',
                 fontFamily: 'var(--font-mono)',
                 fontWeight: 800,
                 letterSpacing: '0.06em',
@@ -137,37 +135,12 @@ export const HeroStatus: React.FC<HeroStatusProps> = ({
                 alignItems: 'center',
                 gap: '8px',
                 borderRadius: '2px',
+                boxShadow: '0 0 16px rgba(0, 240, 255, 0.35)',
                 transition: 'all 0.15s ease'
               }}
             >
               <Plus size={15} />
-              <span>START NEW ANALYSIS</span>
-            </button>
-          )}
-
-          {onExploreMonitoring && (
-            <button
-              onClick={onExploreMonitoring}
-              style={{
-                background: 'rgba(255, 255, 255, 0.08)',
-                color: '#ffffff',
-                border: '1px solid rgba(255, 255, 255, 0.3)',
-                padding: '9px 18px',
-                fontSize: '0.76rem',
-                fontFamily: 'var(--font-mono)',
-                fontWeight: 700,
-                letterSpacing: '0.06em',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px',
-                borderRadius: '2px',
-                backdropFilter: 'blur(4px)',
-                transition: 'all 0.15s ease'
-              }}
-            >
-              <ShieldAlert size={15} color="var(--accent-amber)" />
-              <span>EXPLORE MONITORING</span>
+              <span>START NEW ANALYSIS & INGEST IMAGERY</span>
             </button>
           )}
         </div>

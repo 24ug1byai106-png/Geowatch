@@ -226,7 +226,6 @@ export const App: React.FC = () => {
               {/* Hero Banner with Satellite Video Background */}
               <HeroStatus
                 onStartNewAnalysis={() => setIsAnalysisModalOpen(true)}
-                onExploreMonitoring={() => setActiveScreen('monitoring')}
               />
 
               {/* Main Analysis Workspace: Temporal Change Viewer + Calculated Results */}
