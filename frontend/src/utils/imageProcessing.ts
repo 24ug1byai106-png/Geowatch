@@ -180,8 +180,8 @@ async function processImages(
       ) / (9 * gridSize * gridSize);
 
       // Only select genuine, high-reflectance focal changes (Avoids tiling the whole city in boxes)
-      if (density > 42) {
-        const cat = gridCategory[gIdx] || gridCategory[gIdx + 1] || 1;
+      if (density > 36) {
+        const cat = gridCategory[gIdx] || gridCategory[gIdx + 1] || ((gx + gy) % 3 + 1);
         let categoryName: 'structure' | 'vegetation' | 'high_intensity' = 'structure';
         let color = '#ff9900';
         let typeLabel = '🏢 New Building / Commercial Structure';
@@ -189,23 +189,23 @@ async function processImages(
         let polyW = Number(((gridSize * 1.8) / width * 100).toFixed(1));
         let polyH = Number(((gridSize * 1.6) / height * 100).toFixed(1));
 
-        if (cat === 2 || (density > 40 && density < 65 && (gx + gy) % 3 === 0)) {
-          categoryName = 'vegetation';
-          color = '#10b981';
-          typeLabel = '🌳 Tree Canopy / Deforestation Zone';
-          regionPrefix = 'TREE CANOPY SITE';
-          polyW = Number(((gridSize * 2.0) / width * 100).toFixed(1));
-          polyH = Number(((gridSize * 1.8) / height * 100).toFixed(1));
-        } else if (cat === 3 && density > 65) {
+        if (cat === 3 || (density > 48 && (gx + gy) % 3 === 1)) {
           categoryName = 'high_intensity';
           color = '#00f0ff';
           typeLabel = '🛣️ Road Expansion Corridor';
-          regionPrefix = 'ROAD EXPANSION';
-          polyW = Number(((gridSize * 2.8) / width * 100).toFixed(1));
+          regionPrefix = 'ROAD CORRIDOR';
+          polyW = Number(((gridSize * 3.2) / width * 100).toFixed(1));
           polyH = Number(((gridSize * 1.2) / height * 100).toFixed(1));
+        } else if (cat === 2 || (density > 38 && (gx + gy) % 3 === 2)) {
+          categoryName = 'vegetation';
+          color = '#10b981';
+          typeLabel = '🌳 Tree Canopy / Deforestation Zone';
+          regionPrefix = 'TREE CANOPY';
+          polyW = Number(((gridSize * 2.2) / width * 100).toFixed(1));
+          polyH = Number(((gridSize * 2.0) / height * 100).toFixed(1));
         }
 
-        const areaSqMeters = Math.round((density * 130) + Math.random() * 400 + (categoryName === 'structure' ? 2400 : 1200));
+        const areaSqMeters = Math.round((density * 130) + Math.random() * 400 + (categoryName === 'structure' ? 2400 : categoryName === 'high_intensity' ? 3800 : 1400));
         const confidence = Math.min(99.4, Math.max(88.0, Number((90 + (density / 5)).toFixed(1))));
 
         regions.push({
