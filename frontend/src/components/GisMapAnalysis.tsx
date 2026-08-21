@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { MapContainer, TileLayer, Polygon, Popup, useMap } from 'react-leaflet';
+import { MapContainer, TileLayer, Polygon, Popup, Marker, useMap } from 'react-leaflet';
+import L from 'leaflet';
 import { Filter } from 'lucide-react';
 import type { PresetDataset, CalculatedChangeRegion } from '../types';
 
@@ -14,6 +15,41 @@ const MapRecenter: React.FC<{ coords: [number, number] }> = ({ coords }) => {
     map.setView(coords, 14);
   }, [coords, map]);
   return null;
+};
+
+// Create custom SVG GIS symbols for Buildings, Trees, and Roads
+const getFeatureIcon = (category: string) => {
+  if (category === 'structure') {
+    return L.divIcon({
+      className: 'gis-bldg-marker',
+      html: `<div style="background: rgba(10, 14, 23, 0.95); border: 2px solid #ff9900; border-radius: 5px; padding: 2px 6px; font-size: 10px; display: flex; align-items: center; gap: 4px; color: #ffaa00; box-shadow: 0 0 10px rgba(255,153,0,0.6); font-family: monospace; font-weight: 800; cursor: pointer; white-space: nowrap;">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#ff9900" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 22V4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v18Z"/><path d="M6 12H4a2 2 0 0 0-2 2v8h4"/><path d="M18 9h2a2 2 0 0 1 2 2v11h-4"/><path d="M10 6h4"/><path d="M10 10h4"/><path d="M10 14h4"/><path d="M10 18h4"/></svg>
+        <span>BUILDING</span>
+      </div>`,
+      iconSize: [84, 20],
+      iconAnchor: [42, 10]
+    });
+  }
+  if (category === 'vegetation') {
+    return L.divIcon({
+      className: 'gis-tree-marker',
+      html: `<div style="background: rgba(4, 30, 20, 0.95); border: 2px solid #10b981; border-radius: 5px; padding: 2px 6px; font-size: 10px; display: flex; align-items: center; gap: 4px; color: #10b981; box-shadow: 0 0 10px rgba(16,185,129,0.6); font-family: monospace; font-weight: 800; cursor: pointer; white-space: nowrap;">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 10v10"/><path d="M12 14l3-3"/><path d="M12 17l-3-3"/><path d="M12 3a7 7 0 0 0-7 7c0 4 7 10 7 10s7-6 7-10a7 7 0 0 0-7-7z"/></svg>
+        <span>TREES</span>
+      </div>`,
+      iconSize: [72, 20],
+      iconAnchor: [36, 10]
+    });
+  }
+  return L.divIcon({
+    className: 'gis-road-marker',
+    html: `<div style="background: rgba(10, 25, 47, 0.95); border: 2px solid #00f0ff; border-radius: 5px; padding: 2px 6px; font-size: 10px; display: flex; align-items: center; gap: 4px; color: #00f0ff; box-shadow: 0 0 10px rgba(0,240,255,0.6); font-family: monospace; font-weight: 800; cursor: pointer; white-space: nowrap;">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#00f0ff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="19" r="3"/><path d="M9 19h8.5a3.5 3.5 0 0 0 0-7h-11a3.5 3.5 0 0 1 0-7H15"/><circle cx="18" cy="5" r="3"/></svg>
+      <span>ROAD</span>
+    </div>`,
+    iconSize: [68, 20],
+    iconAnchor: [34, 10]
+  });
 };
 
 export const GisMapAnalysis: React.FC<GisMapAnalysisProps> = ({ dataset, onSelectObject }) => {
@@ -35,7 +71,7 @@ export const GisMapAnalysis: React.FC<GisMapAnalysisProps> = ({ dataset, onSelec
 
   const baseLat = dataset.coordinates[0];
   const baseLng = dataset.coordinates[1];
-  const span = 0.015;
+  const span = 0.055;
 
   return (
     <div className="hud-panel" style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
@@ -47,7 +83,7 @@ export const GisMapAnalysis: React.FC<GisMapAnalysisProps> = ({ dataset, onSelec
           <span>GIS CHANGE MAP // {dataset.name.toUpperCase()}</span>
         </div>
 
-        {/* Confidence Threshold Slider Control (Mitigating False Positives) */}
+        {/* Confidence Threshold Slider Control */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.68rem', fontFamily: 'var(--font-mono)' }}>
           <Filter size={12} color="var(--accent-amber)" />
           <span style={{ color: 'var(--text-dim)' }}>CONFIDENCE:</span>
@@ -64,7 +100,7 @@ export const GisMapAnalysis: React.FC<GisMapAnalysisProps> = ({ dataset, onSelec
             &ge;{confidenceThreshold}%
           </span>
           <span style={{ color: '#10b981', fontSize: '0.62rem' }}>
-            ({filteredRegions.length}/{rawRegions.length} polygons)
+            ({filteredRegions.length}/{rawRegions.length} sites)
           </span>
         </div>
       </div>
@@ -83,10 +119,10 @@ export const GisMapAnalysis: React.FC<GisMapAnalysisProps> = ({ dataset, onSelec
         {/* Category Pills */}
         <div style={{ display: 'flex', gap: '4px' }}>
           {[
-            { id: 'all', label: 'ALL CHANGES' },
+            { id: 'all', label: 'ALL SITES' },
             { id: 'structure', label: '🏢 BUILDINGS' },
-            { id: 'vegetation', label: '🌳 VEGETATION' },
-            { id: 'high_intensity', label: '⚡ HIGH-DELTA' }
+            { id: 'vegetation', label: '🌳 TREES' },
+            { id: 'high_intensity', label: '🛣️ ROADS' }
           ].map((cat) => (
             <button
               key={cat.id}
@@ -160,7 +196,7 @@ export const GisMapAnalysis: React.FC<GisMapAnalysisProps> = ({ dataset, onSelec
 
         <MapContainer
           center={dataset.coordinates}
-          zoom={14}
+          zoom={13}
           zoomControl={true}
           style={{ width: '100%', height: '100%' }}
         >
@@ -171,49 +207,66 @@ export const GisMapAnalysis: React.FC<GisMapAnalysisProps> = ({ dataset, onSelec
             url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png"
           />
 
-          {/* Calculated Geographic Polygons from Image Differencing */}
+          {/* Render Vector Polygons and Building/Tree Symbols */}
           {(activeStage === 'DETECTION' || activeStage === 'COMPARISON') && filteredRegions.map((region) => {
             const relX = region.x / 100;
             const relY = region.y / 100;
             const relW = region.width / 100;
             const relH = region.height / 100;
 
+            const centerLat = baseLat + (0.5 - relY) * span;
+            const centerLng = baseLng + (relX - 0.5) * span;
+
             const polyCoords: [number, number][] = [
-              [baseLat + (0.5 - relY) * span, baseLng + (relX - 0.5) * span],
-              [baseLat + (0.5 - relY) * span, baseLng + (relX + relW - 0.5) * span],
-              [baseLat + (0.5 - relY - relH) * span, baseLng + (relX + relW - 0.5) * span],
-              [baseLat + (0.5 - relY - relH) * span, baseLng + (relX - 0.5) * span]
+              [centerLat, centerLng],
+              [centerLat, centerLng + relW * span],
+              [centerLat - relH * span, centerLng + relW * span],
+              [centerLat - relH * span, centerLng]
             ];
 
+            const isBuilding = region.category === 'structure';
+            const isTree = region.category === 'vegetation';
+
             return (
-              <Polygon
-                key={region.id}
-                positions={polyCoords}
-                eventHandlers={{
-                  click: () => onSelectObject(region)
-                }}
-                pathOptions={{
-                  color: region.color,
-                  fillColor: region.color,
-                  fillOpacity: 0.45,
-                  weight: 2
-                }}
-              >
-                <Popup>
-                  <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.72rem', padding: '4px' }}>
-                    <div style={{ color: region.color, fontWeight: 'bold', marginBottom: '2px' }}>
-                      {region.name}
+              <React.Fragment key={region.id}>
+                <Polygon
+                  positions={polyCoords}
+                  eventHandlers={{
+                    click: () => onSelectObject(region)
+                  }}
+                  pathOptions={{
+                    color: region.color,
+                    weight: isBuilding ? 2 : 2.5,
+                    fillColor: region.color,
+                    fillOpacity: 0.15,
+                    dashArray: isBuilding ? '5, 3' : isTree ? '2, 3' : undefined
+                  }}
+                >
+                  <Popup>
+                    <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.72rem', padding: '4px' }}>
+                      <div style={{ color: region.color, fontWeight: 'bold', marginBottom: '2px' }}>
+                        {region.name}
+                      </div>
+                      <div>TYPE: <strong>{region.type}</strong></div>
+                      <div>CONFIDENCE: <strong style={{ color: '#10b981' }}>{region.confidence}%</strong></div>
+                      <div>EST. AREA: <strong>{region.areaSqMeters.toLocaleString()} m²</strong></div>
+                      <div>INTENSITY: <strong>{region.intensity} / 255</strong></div>
+                      <div style={{ marginTop: '4px', fontSize: '0.65rem', color: '#60a5fa' }}>
+                        [Click to inspect full region telemetry]
+                      </div>
                     </div>
-                    <div>TYPE: <strong>{region.type}</strong></div>
-                    <div>CONFIDENCE: <strong style={{ color: '#10b981' }}>{region.confidence}%</strong></div>
-                    <div>EST. AREA: <strong>{region.areaSqMeters.toLocaleString()} m²</strong></div>
-                    <div>INTENSITY: <strong>{region.intensity} / 255</strong></div>
-                    <div style={{ marginTop: '4px', fontSize: '0.65rem', color: '#60a5fa' }}>
-                      [Click to inspect full region telemetry]
-                    </div>
-                  </div>
-                </Popup>
-              </Polygon>
+                  </Popup>
+                </Polygon>
+
+                {/* Building / Tree Badge Marker */}
+                <Marker
+                  position={[centerLat - (relH * span) / 2, centerLng + (relW * span) / 2]}
+                  icon={getFeatureIcon(region.category)}
+                  eventHandlers={{
+                    click: () => onSelectObject(region)
+                  }}
+                />
+              </React.Fragment>
             );
           })}
         </MapContainer>

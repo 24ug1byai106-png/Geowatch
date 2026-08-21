@@ -29,35 +29,38 @@ const MapController: React.FC<{ targetCoords: [number, number] | null; defaultCo
   return null;
 };
 
-// Create custom GIS markers for Buildings, Trees, and Roads
+// Create custom SVG GIS symbols for Buildings, Trees, and Roads
 const getFeatureIcon = (category: string) => {
   if (category === 'structure') {
     return L.divIcon({
       className: 'gis-bldg-marker',
-      html: `<div style="background: rgba(15,23,42,0.92); border: 1.5px solid #ff9900; border-radius: 4px; padding: 2px 6px; font-size: 11px; display: flex; align-items: center; gap: 4px; color: #ff9900; box-shadow: 0 0 10px rgba(255,153,0,0.5); font-family: monospace; font-weight: bold; cursor: pointer; white-space: nowrap;">
-        <span>🏢</span><span>BUILDING</span>
+      html: `<div style="background: rgba(10, 14, 23, 0.95); border: 2px solid #ff9900; border-radius: 6px; padding: 3px 8px; font-size: 11px; display: flex; align-items: center; gap: 6px; color: #ffaa00; box-shadow: 0 0 14px rgba(255,153,0,0.7); font-family: monospace; font-weight: 800; cursor: pointer; white-space: nowrap;">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#ff9900" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 22V4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v18Z"/><path d="M6 12H4a2 2 0 0 0-2 2v8h4"/><path d="M18 9h2a2 2 0 0 1 2 2v11h-4"/><path d="M10 6h4"/><path d="M10 10h4"/><path d="M10 14h4"/><path d="M10 18h4"/></svg>
+        <span>BUILDING</span>
       </div>`,
-      iconSize: [88, 22],
-      iconAnchor: [44, 11]
+      iconSize: [98, 24],
+      iconAnchor: [49, 12]
     });
   }
   if (category === 'vegetation') {
     return L.divIcon({
       className: 'gis-tree-marker',
-      html: `<div style="background: rgba(6,78,59,0.92); border: 1.5px solid #10b981; border-radius: 4px; padding: 2px 6px; font-size: 11px; display: flex; align-items: center; gap: 4px; color: #10b981; box-shadow: 0 0 10px rgba(16,185,129,0.5); font-family: monospace; font-weight: bold; cursor: pointer; white-space: nowrap;">
-        <span>🌳</span><span>TREES</span>
+      html: `<div style="background: rgba(4, 30, 20, 0.95); border: 2px solid #10b981; border-radius: 6px; padding: 3px 8px; font-size: 11px; display: flex; align-items: center; gap: 6px; color: #10b981; box-shadow: 0 0 14px rgba(16,185,129,0.7); font-family: monospace; font-weight: 800; cursor: pointer; white-space: nowrap;">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 10v10"/><path d="M12 14l3-3"/><path d="M12 17l-3-3"/><path d="M12 3a7 7 0 0 0-7 7c0 4 7 10 7 10s7-6 7-10a7 7 0 0 0-7-7z"/></svg>
+        <span>TREES</span>
       </div>`,
-      iconSize: [75, 22],
-      iconAnchor: [37, 11]
+      iconSize: [82, 24],
+      iconAnchor: [41, 12]
     });
   }
   return L.divIcon({
     className: 'gis-road-marker',
-    html: `<div style="background: rgba(30,58,138,0.92); border: 1.5px solid #00f0ff; border-radius: 4px; padding: 2px 6px; font-size: 11px; display: flex; align-items: center; gap: 4px; color: #00f0ff; box-shadow: 0 0 10px rgba(0,240,255,0.5); font-family: monospace; font-weight: bold; cursor: pointer; white-space: nowrap;">
-      <span>🛣️</span><span>ROAD</span>
+    html: `<div style="background: rgba(10, 25, 47, 0.95); border: 2px solid #00f0ff; border-radius: 6px; padding: 3px 8px; font-size: 11px; display: flex; align-items: center; gap: 6px; color: #00f0ff; box-shadow: 0 0 14px rgba(0,240,255,0.7); font-family: monospace; font-weight: 800; cursor: pointer; white-space: nowrap;">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#00f0ff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="19" r="3"/><path d="M9 19h8.5a3.5 3.5 0 0 0 0-7h-11a3.5 3.5 0 0 1 0-7H15"/><circle cx="18" cy="5" r="3"/></svg>
+      <span>ROAD</span>
     </div>`,
-    iconSize: [72, 22],
-    iconAnchor: [36, 11]
+    iconSize: [78, 24],
+    iconAnchor: [39, 12]
   });
 };
 
