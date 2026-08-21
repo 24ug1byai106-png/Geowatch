@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Navbar } from './components/Navbar';
 import { Sidebar } from './components/Sidebar';
-import { HeroStatus } from './components/HeroStatus';
 import { TemporalAnalysis } from './components/TemporalAnalysis';
 import { DetectionResults } from './components/DetectionResults';
 import { ObservationTelemetry } from './components/ObservationTelemetry';
@@ -223,11 +222,6 @@ export const App: React.FC = () => {
           {/* SCREEN 1: MAIN ANALYSIS SCREEN */}
           {activeScreen === 'analysis' && (
             <>
-              {/* Hero Banner with Satellite Video Background */}
-              <HeroStatus
-                onStartNewAnalysis={() => setIsAnalysisModalOpen(true)}
-              />
-
               {/* Main Analysis Workspace: Temporal Change Viewer + Calculated Results */}
               <div style={{
                 display: 'grid',
