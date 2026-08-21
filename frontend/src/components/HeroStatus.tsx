@@ -24,24 +24,40 @@ export const HeroStatus: React.FC<HeroStatusProps> = ({ isProcessing }) => {
           fontSize: '0.72rem',
           color: 'var(--accent-amber)',
           letterSpacing: '0.08em',
-          marginBottom: '6px'
+          marginBottom: '8px'
         }}>
           <span className="led-amber" />
           <span>LIVE ANALYSIS // SATELLITE CHANGE DETECTION // MULTI-TEMPORAL OBSERVATION</span>
         </div>
 
-        <h2 style={{
-          fontFamily: 'var(--font-tech)',
-          fontSize: '2.3rem',
-          fontWeight: 900,
-          letterSpacing: '0.06em',
-          color: '#ffffff',
-          textTransform: 'uppercase',
-          lineHeight: 1.05,
-          marginBottom: '8px'
-        }}>
-          EARTH CHANGE<br />DETECTION
-        </h2>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '20px', marginBottom: '10px' }}>
+          <img 
+            src="/hydra_logo.png" 
+            alt="Hydra Positioning System Logo" 
+            style={{ 
+              width: '64px', 
+              height: '64px', 
+              objectFit: 'contain', 
+              filter: 'drop-shadow(0 0 16px rgba(0, 240, 255, 0.45))',
+              background: 'rgba(7, 10, 18, 0.9)',
+              padding: '4px',
+              borderRadius: '6px',
+              border: '1px solid rgba(0, 240, 255, 0.35)'
+            }} 
+          />
+          <h2 style={{
+            fontFamily: 'var(--font-tech)',
+            fontSize: '2.3rem',
+            fontWeight: 900,
+            letterSpacing: '0.06em',
+            color: '#ffffff',
+            textTransform: 'uppercase',
+            lineHeight: 1.05,
+            margin: 0
+          }}>
+            HYDRA POSITIONING<br />SYSTEM
+          </h2>
+        </div>
 
         <p style={{
           fontFamily: 'var(--font-sans)',

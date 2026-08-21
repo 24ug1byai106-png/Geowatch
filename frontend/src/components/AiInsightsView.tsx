@@ -109,16 +109,32 @@ export const AiInsightsView: React.FC<AiInsightsViewProps> = ({ dataset }) => {
       
       {/* Header Banner with Direct Government Export Suite */}
       <div className="hud-panel" style={{ padding: '18px 22px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '14px' }}>
-        <div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontFamily: 'var(--font-mono)', fontSize: '0.72rem', color: 'var(--accent-amber)' }}>
-            <Sparkles size={15} />
-            <span>HYDRA POSITIONING SYSTEM // AI CHANGE INTELLIGENCE & CIVIC AUDIT</span>
-          </div>
-          <h2 style={{ fontFamily: 'var(--font-tech)', fontSize: '1.45rem', color: '#fff', margin: '4px 0 0 0' }}>
-            {dataset.name.toUpperCase()} // EXHAUSTIVE GOVERNMENT AUDIT REPORT
-          </h2>
-          <div style={{ fontSize: '0.68rem', color: 'var(--text-dim)', fontFamily: 'var(--font-mono)', marginTop: '2px' }}>
-            Multi-Temporal Copernicus Sentinel-2 MSI Audit ({dataset.beforeYear} vs {dataset.afterYear})
+        <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+          <img 
+            src="/hydra_logo.png" 
+            alt="Hydra Positioning System Logo" 
+            style={{ 
+              width: '46px', 
+              height: '46px', 
+              objectFit: 'contain', 
+              filter: 'drop-shadow(0 0 10px rgba(0, 240, 255, 0.4))',
+              background: 'rgba(7, 10, 18, 0.85)',
+              padding: '3px',
+              borderRadius: '4px',
+              border: '1px solid rgba(0, 240, 255, 0.3)'
+            }} 
+          />
+          <div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontFamily: 'var(--font-mono)', fontSize: '0.72rem', color: 'var(--accent-amber)' }}>
+              <Sparkles size={15} />
+              <span>HYDRA POSITIONING SYSTEM // AI CHANGE INTELLIGENCE & CIVIC AUDIT</span>
+            </div>
+            <h2 style={{ fontFamily: 'var(--font-tech)', fontSize: '1.45rem', color: '#fff', margin: '4px 0 0 0' }}>
+              {dataset.name.toUpperCase()} // EXHAUSTIVE GOVERNMENT AUDIT REPORT
+            </h2>
+            <div style={{ fontSize: '0.68rem', color: 'var(--text-dim)', fontFamily: 'var(--font-mono)', marginTop: '2px' }}>
+              Multi-Temporal Copernicus Sentinel-2 MSI Audit ({dataset.beforeYear} vs {dataset.afterYear})
+            </div>
           </div>
         </div>
 

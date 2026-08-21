@@ -61,16 +61,32 @@ export const GovernmentMonitoringView: React.FC<GovernmentMonitoringViewProps> =
       
       {/* Top Banner */}
       <div className="hud-panel" style={{ padding: '16px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px' }}>
-        <div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontFamily: 'var(--font-mono)', fontSize: '0.72rem', color: 'var(--accent-amber)' }}>
-            <ShieldAlert size={16} />
-            <span>HYDRA POSITIONING SYSTEM // SATELLITE SURVEILLANCE & CIVIC ALERT DISPATCH</span>
-          </div>
-          <h2 style={{ fontFamily: 'var(--font-tech)', fontSize: '1.4rem', color: '#fff', margin: '4px 0 0 0' }}>
-            CIVIC MONITORING & GOVERNMENT ALERTS // {dataset.name.toUpperCase()}
-          </h2>
-          <div style={{ fontSize: '0.68rem', color: 'var(--text-dim)', fontFamily: 'var(--font-mono)', marginTop: '3px' }}>
-            Satellite-Based Change Observation & Civic Infrastructure Verification Queue
+        <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+          <img 
+            src="/hydra_logo.png" 
+            alt="Hydra Positioning System Logo" 
+            style={{ 
+              width: '44px', 
+              height: '44px', 
+              objectFit: 'contain', 
+              filter: 'drop-shadow(0 0 10px rgba(0, 240, 255, 0.4))',
+              background: 'rgba(7, 10, 18, 0.85)',
+              padding: '3px',
+              borderRadius: '4px',
+              border: '1px solid rgba(0, 240, 255, 0.3)'
+            }} 
+          />
+          <div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontFamily: 'var(--font-mono)', fontSize: '0.72rem', color: 'var(--accent-amber)' }}>
+              <ShieldAlert size={16} />
+              <span>HYDRA POSITIONING SYSTEM // SATELLITE SURVEILLANCE & CIVIC ALERT DISPATCH</span>
+            </div>
+            <h2 style={{ fontFamily: 'var(--font-tech)', fontSize: '1.4rem', color: '#fff', margin: '4px 0 0 0' }}>
+              CIVIC MONITORING & GOVERNMENT ALERTS // {dataset.name.toUpperCase()}
+            </h2>
+            <div style={{ fontSize: '0.68rem', color: 'var(--text-dim)', fontFamily: 'var(--font-mono)', marginTop: '3px' }}>
+              Satellite-Based Change Observation & Civic Infrastructure Verification Queue
+            </div>
           </div>
         </div>
 

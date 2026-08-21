@@ -2,7 +2,6 @@ import React, { useState, useRef, useEffect } from 'react';
 import { 
   X, 
   Send, 
-  Sparkles, 
   Bot, 
   User, 
   Loader2,
@@ -196,18 +195,16 @@ LEGAL COMPLIANCE INSTRUCTIONS:
         {/* Modal Header */}
         <div className="hud-header" style={{ justifyContent: 'space-between', padding: '12px 18px', borderBottom: '1px solid rgba(0, 240, 255, 0.2)' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <div style={{
-              width: '28px',
-              height: '28px',
-              border: '1px solid #00f0ff',
-              background: 'rgba(0, 240, 255, 0.12)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              color: '#00f0ff'
-            }}>
-              <Sparkles size={16} />
-            </div>
+            <img 
+              src="/hydra_logo.png" 
+              alt="Hydra Logo" 
+              style={{ 
+                width: '32px', 
+                height: '32px', 
+                objectFit: 'contain', 
+                filter: 'drop-shadow(0 0 6px rgba(0, 240, 255, 0.4))' 
+              }} 
+            />
             <div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <span style={{ fontFamily: 'var(--font-tech)', fontSize: '1rem', fontWeight: 800, color: '#fff' }}>

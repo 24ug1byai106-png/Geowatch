@@ -62,31 +62,43 @@ export const Sidebar: React.FC<SidebarProps> = ({
           background: 'rgba(10, 15, 26, 0.85)',
           padding: '10px 12px',
           display: 'flex',
-          flexDirection: 'column',
-          gap: '5px'
+          alignItems: 'center',
+          gap: '10px'
         }}>
-          <div style={{
-            fontFamily: 'var(--font-tech)',
-            fontSize: '0.85rem',
-            fontWeight: 800,
-            color: '#00f0ff',
-            letterSpacing: '0.08em',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between'
-          }}>
-            <span>HYDRA POSITIONING SYSTEM</span>
-            <span style={{ fontSize: '0.65rem', color: '#10b981' }}>● ONLINE</span>
-          </div>
+          <img 
+            src="/hydra_logo.png" 
+            alt="Hydra Logo" 
+            style={{ 
+              width: '36px', 
+              height: '36px', 
+              objectFit: 'contain', 
+              filter: 'drop-shadow(0 0 6px rgba(0, 240, 255, 0.4))' 
+            }} 
+          />
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', flex: 1 }}>
+            <div style={{
+              fontFamily: 'var(--font-tech)',
+              fontSize: '0.8rem',
+              fontWeight: 800,
+              color: '#00f0ff',
+              letterSpacing: '0.06em',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between'
+            }}>
+              <span>HYDRA SYSTEM</span>
+              <span style={{ fontSize: '0.6rem', color: '#10b981' }}>● ONLINE</span>
+            </div>
 
-          <div style={{
-            fontFamily: 'var(--font-mono)',
-            fontSize: '0.62rem',
-            color: 'var(--accent-amber)',
-            letterSpacing: '0.04em',
-            fontWeight: 'bold'
-          }}>
-            EARTH OBSERVATION SYSTEM
+            <div style={{
+              fontFamily: 'var(--font-mono)',
+              fontSize: '0.58rem',
+              color: 'var(--accent-amber)',
+              letterSpacing: '0.04em',
+              fontWeight: 'bold'
+            }}>
+              EARTH OBSERVATION AI
+            </div>
           </div>
         </div>
 

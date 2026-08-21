@@ -26,26 +26,22 @@ export const Navbar: React.FC<NavbarProps> = ({
     <header className="hud-panel" style={{ borderBottom: '1px solid var(--border-amber)', background: 'rgba(11, 15, 22, 0.96)', backdropFilter: 'blur(8px)', position: 'sticky', top: 0, zIndex: 100 }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 24px' }}>
         
-        {/* Left: GeoWatch Mission Branding & Live Telemetry Clock */}
+        {/* Left: Hydra Mission Branding & Live Telemetry Clock */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
-          <div style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            width: '38px',
-            height: '38px',
-            border: '1px solid #00f0ff',
-            background: 'rgba(0, 240, 255, 0.12)',
-            color: '#00f0ff',
-            boxShadow: '0 0 14px rgba(0, 240, 255, 0.4)',
-            borderRadius: '3px'
-          }}>
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#00f0ff" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-              <polygon points="12 2 2 7 12 12 22 7 12 2" />
-              <polyline points="2 17 12 22 22 17" />
-              <polyline points="2 12 12 17 22 12" />
-            </svg>
-          </div>
+          <img 
+            src="/hydra_logo.png" 
+            alt="Hydra Positioning System Logo" 
+            style={{ 
+              width: '44px', 
+              height: '44px', 
+              objectFit: 'contain', 
+              borderRadius: '4px',
+              filter: 'drop-shadow(0 0 10px rgba(0, 240, 255, 0.45))',
+              background: 'rgba(7, 10, 18, 0.8)',
+              padding: '2px',
+              border: '1px solid rgba(0, 240, 255, 0.3)'
+            }} 
+          />
           <div>
             <h1 style={{
               fontFamily: 'var(--font-tech)',
