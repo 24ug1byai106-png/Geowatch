@@ -19,6 +19,7 @@ import { AskGeoWatchModal } from './components/AskGeoWatchModal';
 import { LogsDrawer } from './components/LogsDrawer';
 import type { LogEntry } from './components/LogsDrawer';
 import { HelpModal } from './components/HelpModal';
+import { LandingHeroLogin } from './components/LandingHeroLogin';
 import { SENTINEL_2024_2026_DATASET, apiClient } from './api/client';
 import { performImageChangeDetection } from './utils/imageProcessing';
 import { GovernmentMonitoringView } from './components/GovernmentMonitoringView';
@@ -27,6 +28,10 @@ import { generateGovernmentAlertsFromDataset } from './utils/alertGenerator';
 import type { PresetDataset, CalculatedChangeRegion, GovernmentAlert, GovernmentAlertStatus } from './types';
 
 export const App: React.FC = () => {
+  // Authentication & Officer Session State
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
+  const [officerEmail, setOfficerEmail] = useState<string>('officer.bengaluru@isro.gov.in');
+
   // Screen state
   const [activeScreen, setActiveScreen] = useState<string>('analysis');
   const [selectedDataset, setSelectedDataset] = useState<PresetDataset>(SENTINEL_2024_2026_DATASET);
@@ -153,12 +158,30 @@ export const App: React.FC = () => {
     addLog(`Exported calculated JSON report for ${selectedDataset.name}`, 'success');
   };
 
+  // Render Full Hero & Official Login Portal if unauthenticated
+  if (!isAuthenticated) {
+    return (
+      <LandingHeroLogin
+        onLoginSuccess={(email) => {
+          setOfficerEmail(email);
+          setIsAuthenticated(true);
+          addLog(`Officer credentials authenticated: ${email}`, 'success');
+        }}
+      />
+    );
+  }
+
   return (
     <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', backgroundColor: 'var(--bg-space)' }}>
       
       {/* Top Mission Navbar (Clean Header) */}
       <Navbar
         onOpenLogs={() => setIsLogsOpen(true)}
+        userEmail={officerEmail}
+        onLogout={() => {
+          setIsAuthenticated(false);
+          addLog('Officer logged out of portal', 'info');
+        }}
       />
 
       {/* Main Body */}

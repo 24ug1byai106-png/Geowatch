@@ -1,12 +1,16 @@
 import React, { useState, useEffect } from 'react';
-import { Bell, User } from 'lucide-react';
+import { Bell, LogOut, ShieldCheck } from 'lucide-react';
 
 interface NavbarProps {
   onOpenLogs: () => void;
+  userEmail?: string;
+  onLogout?: () => void;
 }
 
 export const Navbar: React.FC<NavbarProps> = ({
-  onOpenLogs
+  onOpenLogs,
+  userEmail,
+  onLogout
 }) => {
   const [time, setTime] = useState<string>('');
   const [utcTime, setUtcTime] = useState<string>('');
@@ -65,8 +69,26 @@ export const Navbar: React.FC<NavbarProps> = ({
           </div>
         </div>
 
-        {/* Right: Mission Operator & Logs */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--text-dim)' }}>
+        {/* Right: Officer Profile, Logs & Logout */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', color: 'var(--text-dim)' }}>
+          
+          {userEmail && (
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              background: 'rgba(0, 240, 255, 0.08)',
+              border: '1px solid rgba(0, 240, 255, 0.25)',
+              padding: '4px 10px',
+              borderRadius: '2px',
+              fontFamily: 'var(--font-mono)',
+              fontSize: '0.7rem'
+            }}>
+              <ShieldCheck size={14} color="#10b981" />
+              <span style={{ color: '#ffffff', fontWeight: 600 }}>{userEmail}</span>
+            </div>
+          )}
+
           <button 
             onClick={onOpenLogs} 
             title="Analysis Diagnostic Logs"
@@ -75,12 +97,18 @@ export const Navbar: React.FC<NavbarProps> = ({
             <Bell size={14} />
             <span>LOGS</span>
           </button>
-          <button 
-            title="GeoWatch Mission Operator"
-            style={{ background: 'rgba(255, 255, 255, 0.05)', border: '1px solid var(--border-dim)', color: 'var(--text-dim)', padding: '6px 8px', cursor: 'pointer', display: 'flex', alignItems: 'center' }}
-          >
-            <User size={15} />
-          </button>
+
+          {onLogout && (
+            <button 
+              onClick={onLogout}
+              title="Logout from Hydra Portal"
+              style={{ background: 'rgba(239, 68, 68, 0.12)', border: '1px solid rgba(239, 68, 68, 0.4)', color: '#f87171', padding: '6px 10px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.72rem', fontFamily: 'var(--font-mono)', fontWeight: 'bold' }}
+            >
+              <LogOut size={13} />
+              <span>LOGOUT</span>
+            </button>
+          )}
+
         </div>
 
       </div>
