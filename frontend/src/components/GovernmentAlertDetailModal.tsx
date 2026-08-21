@@ -390,6 +390,46 @@ export const GovernmentAlertDetailModal: React.FC<GovernmentAlertDetailModalProp
               </div>
             </div>
 
+            {/* Location, Driver Cause & Environmental Impact Analysis */}
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(3, 1fr)',
+              gap: '12px',
+              background: '#070b14',
+              border: '1px solid var(--border-dim)',
+              padding: '12px 14px'
+            }}>
+              <div>
+                <div style={{ fontSize: '0.65rem', fontFamily: 'var(--font-mono)', color: 'var(--accent-amber)', fontWeight: 'bold', marginBottom: '4px' }}>
+                  📍 WHERE / SURVEY SECTOR
+                </div>
+                <div style={{ fontSize: '0.76rem', color: '#fff', fontWeight: 600 }}>
+                  {alert.specificLocation || alert.location}
+                </div>
+                <div style={{ fontSize: '0.62rem', color: 'var(--text-dim)', marginTop: '2px', fontFamily: 'var(--font-mono)' }}>
+                  Centroid: {alert.coordinates[0].toFixed(5)}° N, {alert.coordinates[1].toFixed(5)}° E
+                </div>
+              </div>
+
+              <div>
+                <div style={{ fontSize: '0.65rem', fontFamily: 'var(--font-mono)', color: '#60a5fa', fontWeight: 'bold', marginBottom: '4px' }}>
+                  ⚡ PRIMARY CAUSE & HUMAN DRIVER
+                </div>
+                <p style={{ fontSize: '0.72rem', color: '#cbd5e1', margin: 0, lineHeight: 1.4 }}>
+                  {alert.driverCause || alert.description}
+                </p>
+              </div>
+
+              <div>
+                <div style={{ fontSize: '0.65rem', fontFamily: 'var(--font-mono)', color: '#f87171', fontWeight: 'bold', marginBottom: '4px' }}>
+                  ⚠️ CIVIC & ECOLOGICAL EFFECTS
+                </div>
+                <p style={{ fontSize: '0.72rem', color: '#cbd5e1', margin: 0, lineHeight: 1.4 }}>
+                  {alert.civicImpactEffects || alert.observedChange}
+                </p>
+              </div>
+            </div>
+
             {/* Evidence Analysis Breakdown Grid */}
             <div style={{
               display: 'grid',
@@ -398,7 +438,7 @@ export const GovernmentAlertDetailModal: React.FC<GovernmentAlertDetailModalProp
             }}>
               <div style={{ background: '#0a0f1d', border: '1px solid var(--border-dim)', padding: '10px 14px' }}>
                 <div style={{ fontSize: '0.62rem', fontFamily: 'var(--font-mono)', color: 'var(--accent-amber)', fontWeight: 'bold', marginBottom: '4px' }}>
-                  BEFORE CONDITION (2024)
+                  BEFORE CONDITION ({dataset.beforeYear})
                 </div>
                 <p style={{ fontSize: '0.72rem', color: '#cbd5e1', margin: 0, lineHeight: 1.4 }}>
                   {alert.beforeDescription}
@@ -407,7 +447,7 @@ export const GovernmentAlertDetailModal: React.FC<GovernmentAlertDetailModalProp
 
               <div style={{ background: '#0a0f1d', border: '1px solid var(--border-dim)', padding: '10px 14px' }}>
                 <div style={{ fontSize: '0.62rem', fontFamily: 'var(--font-mono)', color: '#00f0ff', fontWeight: 'bold', marginBottom: '4px' }}>
-                  AFTER CONDITION (2026)
+                  AFTER CONDITION ({dataset.afterYear})
                 </div>
                 <p style={{ fontSize: '0.72rem', color: '#cbd5e1', margin: 0, lineHeight: 1.4 }}>
                   {alert.afterDescription}

@@ -11,35 +11,80 @@ export function generateGovernmentAlertsFromDataset(dataset: PresetDataset): Gov
 
   const alerts: GovernmentAlert[] = [];
 
-  const locations = [
-    'Whitefield IT Corridor (Sector 2)',
-    'Kadugodi Industrial Area (Zone 4)',
-    'Outer Ring Road Expressway Corridor',
-    'Bellandur Catchment Green Buffer',
-    'Varthur Lake Peripheral Zone',
-    'Hoodi Commercial Development Hub',
-    'Hope Farm Transportation Junction',
-    'Channasandra Residential Sector'
+  const locationProfiles = [
+    {
+      loc: 'Outer Ring Road - Mahadevapura Junction',
+      structCause: 'High-density tech park office complex construction and commercial campus expansion.',
+      structEffect: 'Urban heat island rise (+3.1°C), increased electrical load demand, and loss of 2,400 m² open permeable soil.',
+      vegCause: 'Peripheral road widening and construction staging ground clearance.',
+      vegEffect: 'Loss of ~340 mature canopy trees, drastic drop in local air filtration, and increased localized particulate dust.',
+      roadCause: 'Transit corridor arterial widening to accommodate multi-lane bus rapid transit & metro feeder traffic.',
+      roadEffect: 'Increased vehicular throughput capacity, complete elimination of natural shoulder drainage, high impervious runoff.'
+    },
+    {
+      loc: 'Whitefield EPIP Zone (Sector 2)',
+      structCause: 'Commercial multistory IT research facility construction on vacant conversion parcel.',
+      structEffect: 'Increased local peak sewage/water demand and localized microclimate thermal buildup (+2.6°C).',
+      vegCause: 'Real estate plot leveling and green buffer removal for logistics yard.',
+      vegEffect: 'Depletion of green buffer zone, loss of urban bird nesting habitat, reduced carbon sequestration capacity.',
+      roadCause: 'Secondary expressway connector linking ITPL Main Road with Kadugodi road network.',
+      roadEffect: 'Reduced travel bottleneck, removal of roadside vegetation, heightened storm drainage requirement.'
+    },
+    {
+      loc: 'Bellandur Catchment Wetland Buffer',
+      structCause: 'Unauthorized concrete staging platforms and commercial sheds near drainage channel.',
+      structEffect: 'Severe encroachment on seasonal stormwater buffer, heightened monsoon flash-flood risk for downstream sectors.',
+      vegCause: 'Heavy machinery grading and marshland tree clearing for unapproved layout development.',
+      vegEffect: 'Loss of natural wetland sponge function, groundwater recharge depletion, and critical biodiversity loss.',
+      roadCause: 'Unapproved heavy vehicle access road laid through wetland catchment margin.',
+      roadEffect: 'Compaction of wetland soil, obstruction of natural storm runoffs, increased siltation in water body.'
+    },
+    {
+      loc: 'Kadugodi Industrial Cluster (Zone 4)',
+      structCause: 'Large-span manufacturing warehouse and cold-storage distribution facility construction.',
+      structEffect: 'Addition of 8,200 m² non-permeable roof surface, substantial increase in surface stormwater peak volume.',
+      vegCause: 'Scrub forest clearing for industrial container storage yard.',
+      vegEffect: 'Complete topsoil erosion risk during monsoon, loss of natural green buffer surrounding industrial zone.',
+      roadCause: 'Freight transportation heavy-haul access road widening.',
+      roadEffect: 'Enhanced container freight throughput, increased heavy axle load road degradation, dust dispersion.'
+    },
+    {
+      loc: 'Varthur Lake Peripheral Zone',
+      structCause: 'Residential high-rise housing complex foundation development.',
+      structEffect: 'Groundwater table drawdown from deep piling, encroachment on lake 75m buffer regulation boundary.',
+      vegCause: 'Lakefront tree and riparian vegetation removal for residential landscaping.',
+      vegEffect: 'Accelerated shoreline erosion, loss of riparian microclimate cooling, increased nutrient runoff into lake.',
+      roadCause: 'Lake-perimeter ring road expansion linking Varthur with Gunjur.',
+      roadEffect: 'Improved local connectivity, risk of unauthorized night dumping along road shoulders.'
+    }
   ];
 
   regions.forEach((region, index) => {
     const num = (index + 101).toString().padStart(6, '0');
     const alertId = `HPS-2026-${num}`;
+    const profile = locationProfiles[index % locationProfiles.length];
 
     // Realistic Category Mapping
     let category: GovernmentAlertCategory = 'Potential Unauthorized Construction';
     let prefix = 'Structural Addition';
+    let driverCause = profile.structCause;
+    let civicImpactEffects = profile.structEffect;
+
     if (region.category === 'vegetation') {
       category = 'Vegetation Clearing';
       prefix = 'Canopy Deforestation';
+      driverCause = profile.vegCause;
+      civicImpactEffects = profile.vegEffect;
     } else if (region.category === 'high_intensity') {
       category = 'Potential Road Expansion';
       prefix = 'Transportation Corridor';
+      driverCause = profile.roadCause;
+      civicImpactEffects = profile.roadEffect;
     }
 
     // Realistic Severity Distribution (High: ~25%, Medium: ~55%, Low: ~20%)
     let severity: GovernmentAlertSeverity = 'MEDIUM';
-    if (region.areaSqMeters > 7500 || (region.category === 'vegetation' && region.areaSqMeters > 5500)) {
+    if (region.areaSqMeters > 7500 || (region.category === 'vegetation' && region.areaSqMeters > 5500) || profile.loc.includes('Wetland')) {
       severity = 'HIGH';
     } else if (region.areaSqMeters < 3200) {
       severity = 'LOW';
@@ -64,7 +109,6 @@ export function generateGovernmentAlertsFromDataset(dataset: PresetDataset): Gov
     const relY = region.y / 100;
     const lat = baseLat + (0.5 - relY) * span;
     const lng = baseLng + (relX - 0.5) * span;
-    const locName = locations[index % locations.length];
 
     let beforeDesc = `Pre-existing baseline land parcel with minimal structural disturbance recorded in ${dataset.beforeYear} Sentinel-2 pass.`;
     let afterDesc = `Substantial radiometric and spatial reflectance shift identified in ${dataset.afterYear} Sentinel-2 observation pass.`;
@@ -101,7 +145,10 @@ export function generateGovernmentAlertsFromDataset(dataset: PresetDataset): Gov
       severity,
       confidence: region.confidence,
       affectedAreaSqm: region.areaSqMeters,
-      location: locName,
+      location: profile.loc,
+      specificLocation: profile.loc,
+      driverCause,
+      civicImpactEffects,
       coordinates: [lat, lng],
       aoiName: dataset.name,
       beforeDate: `Dec ${dataset.beforeYear}`,

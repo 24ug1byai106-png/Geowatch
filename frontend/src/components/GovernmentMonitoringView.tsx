@@ -252,100 +252,134 @@ export const GovernmentMonitoringView: React.FC<GovernmentMonitoringViewProps> =
               key={alert.id}
               className="hud-panel"
               style={{
-                padding: '14px 18px',
-                display: 'grid',
-                gridTemplateColumns: 'minmax(140px, 1.2fr) minmax(200px, 2fr) minmax(140px, 1.2fr) minmax(130px, 1fr) minmax(130px, 1fr) auto',
-                alignItems: 'center',
-                gap: '14px',
+                padding: '16px 20px',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '10px',
                 transition: 'all 0.15s ease',
-                borderLeft: `3px solid ${alert.severity === 'HIGH' ? '#ef4444' : '#ff9900'}`
+                borderLeft: `4px solid ${alert.severity === 'HIGH' ? '#ef4444' : alert.severity === 'LOW' ? '#38bdf8' : '#ff9900'}`,
+                background: 'rgba(11, 15, 24, 0.9)'
               }}
             >
-              
-              {/* Col 1: ID & Date */}
-              <div>
-                <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.78rem', color: '#00f0ff', fontWeight: 'bold' }}>
-                  {alert.id}
+              {/* Row 1: Top Line Info (ID, Dates, Category, Severity & Status Badges, Action Button) */}
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                  <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.85rem', color: '#00f0ff', fontWeight: 800 }}>
+                    {alert.id}
+                  </span>
+                  <span style={{ fontSize: '0.66rem', color: 'var(--text-dim)', fontFamily: 'var(--font-mono)' }}>
+                    {alert.beforeDate} ➔ {alert.afterDate}
+                  </span>
+                  <span style={{ fontSize: '0.85rem', fontFamily: 'var(--font-tech)', color: '#fff', fontWeight: 800 }}>
+                    {alert.category}
+                  </span>
                 </div>
-                <div style={{ fontSize: '0.62rem', color: 'var(--text-dim)', fontFamily: 'var(--font-mono)', marginTop: '2px' }}>
-                  {alert.beforeDate} ➔ {alert.afterDate}
-                </div>
-              </div>
 
-              {/* Col 2: Category & Description */}
-              <div>
-                <div style={{ fontSize: '0.82rem', fontFamily: 'var(--font-tech)', color: '#fff', fontWeight: 'bold' }}>
-                  {alert.category}
-                </div>
-                <div style={{ fontSize: '0.65rem', color: 'var(--text-dim)', fontFamily: 'var(--font-mono)', marginTop: '2px' }}>
-                  {alert.description}
-                </div>
-              </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  {/* Footprint */}
+                  <span style={{ fontSize: '0.74rem', fontFamily: 'var(--font-mono)', color: '#fff' }}>
+                    <strong>{alert.affectedAreaSqm.toLocaleString()} m²</strong>
+                  </span>
+                  <span style={{ fontSize: '0.65rem', color: '#10b981', fontFamily: 'var(--font-mono)' }}>
+                    Confidence: {alert.confidence}%
+                  </span>
 
-              {/* Col 3: Footprint & Confidence */}
-              <div>
-                <div style={{ fontSize: '0.74rem', fontFamily: 'var(--font-mono)', color: '#fff' }}>
-                  <strong>{alert.affectedAreaSqm.toLocaleString()} m²</strong>
-                </div>
-                <div style={{ fontSize: '0.62rem', color: '#10b981', fontFamily: 'var(--font-mono)' }}>
-                  Confidence: {alert.confidence}%
-                </div>
-              </div>
-
-              {/* Col 4: Severity Badge */}
-              <div>
-                <span style={{
-                  background: alert.severity === 'HIGH' ? 'rgba(239, 68, 68, 0.18)' : 'rgba(234, 179, 8, 0.18)',
-                  border: `1px solid ${alert.severity === 'HIGH' ? '#ef4444' : '#eab308'}`,
-                  color: alert.severity === 'HIGH' ? '#ef4444' : '#eab308',
-                  padding: '2px 7px',
-                  fontSize: '0.62rem',
-                  fontFamily: 'var(--font-mono)',
-                  fontWeight: 'bold',
-                  borderRadius: '2px'
-                }}>
-                  {alert.severity} PRIORITY
-                </span>
-              </div>
-
-              {/* Col 5: Status Badge */}
-              <div>
-                <span style={{
-                  background: 'rgba(0, 0, 0, 0.4)',
-                  border: `1px solid ${getStatusColor(alert.status)}`,
-                  color: getStatusColor(alert.status),
-                  padding: '2px 7px',
-                  fontSize: '0.62rem',
-                  fontFamily: 'var(--font-mono)',
-                  fontWeight: 'bold',
-                  borderRadius: '2px'
-                }}>
-                  {alert.status}
-                </span>
-              </div>
-
-              {/* Col 6: Action Button */}
-              <div>
-                <button
-                  onClick={() => onSelectAlert(alert)}
-                  style={{
-                    background: 'var(--accent-amber)',
-                    color: '#07090e',
-                    border: 'none',
-                    padding: '6px 12px',
-                    fontSize: '0.68rem',
+                  {/* Severity */}
+                  <span style={{
+                    background: alert.severity === 'HIGH' ? 'rgba(239, 68, 68, 0.18)' : alert.severity === 'LOW' ? 'rgba(56, 189, 248, 0.18)' : 'rgba(234, 179, 8, 0.18)',
+                    border: `1px solid ${alert.severity === 'HIGH' ? '#ef4444' : alert.severity === 'LOW' ? '#38bdf8' : '#eab308'}`,
+                    color: alert.severity === 'HIGH' ? '#ef4444' : alert.severity === 'LOW' ? '#38bdf8' : '#eab308',
+                    padding: '2px 8px',
+                    fontSize: '0.62rem',
                     fontFamily: 'var(--font-mono)',
-                    fontWeight: 800,
-                    cursor: 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '4px',
+                    fontWeight: 'bold',
                     borderRadius: '2px'
-                  }}
-                >
-                  <Eye size={13} />
-                  <span>INSPECT</span>
-                </button>
+                  }}>
+                    {alert.severity} PRIORITY
+                  </span>
+
+                  {/* Status */}
+                  <span style={{
+                    background: 'rgba(0, 0, 0, 0.4)',
+                    border: `1px solid ${getStatusColor(alert.status)}`,
+                    color: getStatusColor(alert.status),
+                    padding: '2px 8px',
+                    fontSize: '0.62rem',
+                    fontFamily: 'var(--font-mono)',
+                    fontWeight: 'bold',
+                    borderRadius: '2px'
+                  }}>
+                    {alert.status}
+                  </span>
+
+                  {/* Inspect Button */}
+                  <button
+                    onClick={() => onSelectAlert(alert)}
+                    style={{
+                      background: 'var(--accent-amber)',
+                      color: '#07090e',
+                      border: 'none',
+                      padding: '5px 12px',
+                      fontSize: '0.68rem',
+                      fontFamily: 'var(--font-mono)',
+                      fontWeight: 800,
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '4px',
+                      borderRadius: '2px'
+                    }}
+                  >
+                    <Eye size={13} />
+                    <span>INSPECT DOSSIER</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* Row 2: Location, Cause & Effects Grid */}
+              <div style={{
+                display: 'grid',
+                gridTemplateColumns: '1.2fr 1.8fr 2fr',
+                gap: '14px',
+                borderTop: '1px solid var(--border-dim)',
+                paddingTop: '8px',
+                fontSize: '0.72rem',
+                fontFamily: 'var(--font-mono)'
+              }}>
+                
+                {/* 1. Location / Where */}
+                <div>
+                  <div style={{ color: 'var(--accent-amber)', fontSize: '0.62rem', fontWeight: 'bold', marginBottom: '2px' }}>
+                    📍 WHERE / IDENTIFIED SECTOR:
+                  </div>
+                  <div style={{ color: '#e2e8f0', fontWeight: 600 }}>
+                    {alert.specificLocation || alert.location}
+                  </div>
+                  <div style={{ fontSize: '0.58rem', color: 'var(--text-dim)', marginTop: '2px' }}>
+                    {alert.coordinates[0].toFixed(5)}°N, {alert.coordinates[1].toFixed(5)}°E
+                  </div>
+                </div>
+
+                {/* 2. Cause / Driver */}
+                <div>
+                  <div style={{ color: '#60a5fa', fontSize: '0.62rem', fontWeight: 'bold', marginBottom: '2px' }}>
+                    ⚡ PRIMARY CAUSE & DRIVER:
+                  </div>
+                  <div style={{ color: '#cbd5e1', lineHeight: 1.35 }}>
+                    {alert.driverCause || alert.description}
+                  </div>
+                </div>
+
+                {/* 3. Effects & Environmental Impact */}
+                <div>
+                  <div style={{ color: '#f87171', fontSize: '0.62rem', fontWeight: 'bold', marginBottom: '2px' }}>
+                    ⚠️ CIVIC & ECOLOGICAL EFFECTS:
+                  </div>
+                  <div style={{ color: '#cbd5e1', lineHeight: 1.35 }}>
+                    {alert.civicImpactEffects || alert.observedChange}
+                  </div>
+                </div>
+
               </div>
 
             </div>

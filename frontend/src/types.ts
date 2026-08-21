@@ -129,6 +129,9 @@ export interface GovernmentAlert {
   confidence: number;
   affectedAreaSqm: number;
   location: string;
+  specificLocation?: string;
+  driverCause?: string;
+  civicImpactEffects?: string;
   coordinates: [number, number];
   aoiName: string;
   beforeDate: string;
